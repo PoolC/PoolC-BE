@@ -42,6 +42,7 @@ public class RoomController {
                 .start(roomPostRequest.getStart())
                 .end(roomPostRequest.getEnd())
                 .purpose(roomPostRequest.getPurpose())
+                .sharedUseAllowed(roomPostRequest.isSharedUseAllowed())
                 .build();
         roomService.reservation(reservation);
         return ResponseEntity.ok().build();
@@ -55,6 +56,7 @@ public class RoomController {
                         .start(roomUpdateRequest.getStart())
                         .end(roomUpdateRequest.getEnd())
                         .purpose(roomUpdateRequest.getPurpose())
+                        .sharedUseAllowed(roomUpdateRequest.isSharedUseAllowed())
                 .build(),
                 reservationId);
 

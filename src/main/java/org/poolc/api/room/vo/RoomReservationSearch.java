@@ -17,14 +17,16 @@ public class RoomReservationSearch {
     private final LocalTime end;
     private final String host;
     private String purpose;
+    private final boolean sharedUseAllowed;
 
-    public RoomReservationSearch(Long id,LocalDate date, LocalTime start, LocalTime end, String host, String purpose) {
+    public RoomReservationSearch(Long id,LocalDate date, LocalTime start, LocalTime end, String host, String purpose, boolean sharedUseAllowed) {
         this.id=id;
         this.date = date;
         this.start = start;
         this.end = end;
         this.host = host;
         this.purpose = purpose;
+        this.sharedUseAllowed = sharedUseAllowed;
     }
 
     public RoomReservationSearch(Room room){
@@ -34,5 +36,6 @@ public class RoomReservationSearch {
         this.start=room.getStartTime();
         this.purpose=room.getPurpose();
         this.host=room.getHost().getName();
+        this.sharedUseAllowed=room.isSharedUseAllowed();
     }
 }

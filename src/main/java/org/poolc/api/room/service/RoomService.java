@@ -1,7 +1,6 @@
 package org.poolc.api.room.service;
 
 import lombok.RequiredArgsConstructor;
-import org.poolc.api.auth.exception.UnauthorizedException;
 import org.poolc.api.member.domain.Member;
 import org.poolc.api.room.domain.Room;
 import org.poolc.api.room.exception.BadRequestException;
@@ -13,9 +12,7 @@ import org.poolc.api.room.vo.RoomReservationSearch;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Duration;
 import java.time.LocalDate;
-import java.time.Period;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
@@ -39,14 +36,9 @@ public class RoomService {
     @Transactional
     public void reservation(RoomReservation roomReservation){
         RequestValidCheck(roomReservation);
-        RoomValidCheck(roomReservation);
-        Room room = Room.builder()
-                .date(roomReservation.getDate())
-                .startTime(roomReservation.getStart())
-                .endTime(roomReservation.getEnd())
-                .host(roomReservation.getHost())
-                .purpose(roomReservation.getPurpose())
-                .build();
+        RoomValidCheck(roomReservation, null);
+        Room room = new Room(roomReservation.getDate(), roomReservation.getStart(), roomReservation.getEnd(),
+                roomReservation.getPurpose(), roomReservation.getHost(), roomReservation.isSharedUseAllowed());
         roomRepository.save(room);
     }
 
@@ -56,8 +48,8 @@ public class RoomService {
         //check host
         if(reservation.getHost().equals(room.getHost())){
             RequestValidCheck(reservation);
-            RoomValidCheck(reservation);
-            room.editRoom(reservation.getDate(),reservation.getStart(),reservation.getEnd(),reservation.getPurpose());
+            RoomValidCheck(reservation, id);
+            room.editRoom(reservation.getDate(),reservation.getStart(),reservation.getEnd(),reservation.getPurpose(), reservation.isSharedUseAllowed());
             roomRepository.save(room);
         }else{
             throw new ForbiddenException("내가 한 예약이 아닙니다.");
@@ -84,15 +76,12 @@ public class RoomService {
         }
     }
 
-    private void RoomValidCheck(RoomReservation roomReservation){
-//        if(roomRepository.validCheck(roomReservation.getDate(), roomReservation.getStart(), roomReservation.getEnd()).isExist()){
-//            throw new RuntimeException("해당 시간에 예약이 존재합니다.");
-//        }
-//        roomRepository.validCheck(roomReservation.getDate(), roomReservation.getStart(), roomReservation.getEnd()).ifPresent(a->{throw new RuntimeException("해당 시간에 예약이 존재합니다.");});
-        if(roomRepository.validCheck(roomReservation.getDate(), roomReservation.getStart(), roomReservation.getEnd())>0){
-            throw new ConflictException("해당 시간에 예약이 존재합니다.");
+    private void RoomValidCheck(RoomReservation roomReservation, Long excludedReservationId){
+        List<Room> overlaps = roomRepository.findOverlappingReservations(
+                roomReservation.getDate(), roomReservation.getStart(), roomReservation.getEnd(), excludedReservationId);
+        if (!overlaps.isEmpty()) {
+            throw new ConflictException("이미 예약된 시간입니다. 기존 예약이 출입 가능이면 예약자에게 문의해 함께 이용할 수 있습니다.");
         }
-
     }
 
     private void SearchDayDiffCheck(LocalDate start, LocalDate end){

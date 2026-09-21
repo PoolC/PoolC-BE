@@ -15,12 +15,18 @@ public class RoomReservation {
     private final LocalTime end;
     private final Member host;
     private String purpose;
+    private final boolean sharedUseAllowed;
 
     public RoomReservation(LocalDate date, LocalTime start, LocalTime end, Member host, String purpose) {
+        this(date, start, end, host, purpose, false);
+    }
+
+    public RoomReservation(LocalDate date, LocalTime start, LocalTime end, Member host, String purpose, boolean sharedUseAllowed) {
         this.date = date;
         this.start = start;
         this.end = end;
         this.host = host;
         this.purpose = purpose;
+        this.sharedUseAllowed = sharedUseAllowed;
     }
 }

@@ -24,7 +24,12 @@ public interface RoomRepository extends JpaRepository<Room, Long> {
     @Query("select r from Room r where r.id=(:id)")
     Optional<Room> findRoomReservationById(@Param("id") Long id);
 
-    @Query("select count(r) from Room r where r.date=(:date) and not((r.startTime<(:startTime) and r.endTime<=(:startTime)) or (r.startTime>=(:endTime) and r.endTime>(:endTime))) ")
-    Long validCheck(@Param("date") LocalDate date, @Param("startTime") LocalTime startTime, @Param("endTime") LocalTime endTime);
+    @Query("select r from Room r where r.date = :date "
+            + "and (:excludedReservationId is null or r.id <> :excludedReservationId) "
+            + "and r.startTime < :endTime and r.endTime > :startTime")
+    List<Room> findOverlappingReservations(@Param("date") LocalDate date,
+                                           @Param("startTime") LocalTime startTime,
+                                           @Param("endTime") LocalTime endTime,
+                                           @Param("excludedReservationId") Long excludedReservationId);
 
 }
