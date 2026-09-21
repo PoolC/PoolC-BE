@@ -18,7 +18,7 @@ public class RoomReservation {
     private final boolean sharedUseAllowed;
 
     public RoomReservation(LocalDate date, LocalTime start, LocalTime end, Member host, String purpose) {
-        this(date, start, end, host, purpose, false);
+        this(date, start, end, host, purpose, true);
     }
 
     public RoomReservation(LocalDate date, LocalTime start, LocalTime end, Member host, String purpose, boolean sharedUseAllowed) {

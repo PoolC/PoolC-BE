@@ -49,7 +49,7 @@ public class Room {
 
     @Builder
     public Room(LocalDate date, LocalTime startTime, LocalTime endTime, String purpose, Member host) {
-        this(date, startTime, endTime, purpose, host, false);
+        this(date, startTime, endTime, purpose, host, true);
     }
 
     public Room(LocalDate date, LocalTime startTime, LocalTime endTime, String purpose, Member host, boolean sharedUseAllowed) {
