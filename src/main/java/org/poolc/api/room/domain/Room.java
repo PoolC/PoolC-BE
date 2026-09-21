@@ -30,6 +30,9 @@ public class Room {
     @Column(name = "purpose", nullable = true)
     private String purpose;
 
+    @Column(name = "shared_use_allowed", nullable = false)
+    private boolean sharedUseAllowed;
+
     @ManyToOne
     @JoinColumn(name = "host", nullable=false, referencedColumnName = "uuid")
     private Member host;
@@ -46,21 +49,27 @@ public class Room {
 
     @Builder
     public Room(LocalDate date, LocalTime startTime, LocalTime endTime, String purpose, Member host) {
+        this(date, startTime, endTime, purpose, host, false);
+    }
+
+    public Room(LocalDate date, LocalTime startTime, LocalTime endTime, String purpose, Member host, boolean sharedUseAllowed) {
         this.date = date;
         this.startTime = startTime;
         this.endTime = endTime;
         this.purpose = purpose;
         this.host = host;
+        this.sharedUseAllowed = sharedUseAllowed;
     }
 
     protected Room() {
 
     }
 
-    public void editRoom(LocalDate date, LocalTime startTime, LocalTime endTime, String purpose){
+    public void editRoom(LocalDate date, LocalTime startTime, LocalTime endTime, String purpose, boolean sharedUseAllowed){
         this.date=date;
         this.startTime=startTime;
         this.endTime=endTime;
         this.purpose=purpose;
+        this.sharedUseAllowed=sharedUseAllowed;
     }
 }
