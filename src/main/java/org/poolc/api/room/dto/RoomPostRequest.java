@@ -16,7 +16,7 @@ public class RoomPostRequest {
     private final boolean sharedUseAllowed;
 
     public RoomPostRequest(LocalDate date, LocalTime start, LocalTime end, String purpose) {
-        this(date, start, end, purpose, false);
+        this(date, start, end, purpose, true);
     }
 
     @JsonCreator
