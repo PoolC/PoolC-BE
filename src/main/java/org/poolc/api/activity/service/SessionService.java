@@ -3,20 +3,29 @@ package org.poolc.api.activity.service;
 import lombok.RequiredArgsConstructor;
 import org.poolc.api.activity.domain.Activity;
 import org.poolc.api.activity.domain.Session;
+import org.poolc.api.activity.domain.SessionQrToken;
+import org.poolc.api.activity.dto.SessionCheckInResponse;
+import org.poolc.api.activity.dto.SessionQrResponse;
+import org.poolc.api.activity.dto.SessionResponse;
 import org.poolc.api.activity.exception.NotHostException;
 import org.poolc.api.activity.repository.ActivityRepository;
 import org.poolc.api.activity.repository.SessionRepository;
+import org.poolc.api.activity.repository.SessionQrTokenRepository;
 import org.poolc.api.activity.vo.AttendanceValues;
 import org.poolc.api.activity.vo.SessionCreateValues;
 import org.poolc.api.activity.vo.SessionUpdateValues;
 import org.poolc.api.member.domain.Member;
 import org.poolc.api.member.repository.MemberRepository;
 import org.poolc.api.member.service.MemberService;
+import org.poolc.api.common.exception.ConflictException;
+import org.poolc.api.tool.domain.Qr;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
 import java.util.*;
+import java.util.Base64;
 
 @Service
 @Transactional(readOnly = true)
@@ -28,6 +37,10 @@ public class SessionService {
     private final ActivityRepository activityRepository;
     private final MemberService memberService;
     private final MemberRepository memberRepository;
+    private final SessionQrTokenRepository sessionQrTokenRepository;
+
+    @Value("${activity.session.qr.base-url:https://poolc.org/activity/session/check-in}")
+    private String checkInBaseUrl;
 
 
     @Transactional
@@ -70,11 +83,57 @@ public class SessionService {
         if (!checkUserIsHost(uuid, activity.getHost().getUUID())) {
             throw new NotHostException("호스트가 아니면 출석체크를 할수 없습니다");
         }
+        if (session.isQrEnabled()) {
+            throw new ConflictException("QR 출석이 켜져 있는 동안에는 수동 출석을 수정할 수 없습니다. 먼저 QR을 꺼주세요.");
+        }
         checkMembersExist(values.getMemberLoginIDs());
         checkMembersExistInActivity(values.getMemberLoginIDs(), activity);
         session.clear();
         session.attend(values.getMemberLoginIDs());
 
+    }
+
+    @Transactional
+    public SessionQrResponse generateQr(Member member, Long sessionId) {
+        Session session = findSessionForManagement(member, sessionId);
+        sessionQrTokenRepository.findBySessionId(sessionId).ifPresent(sessionQrTokenRepository::delete);
+        String token = UUID.randomUUID().toString().replace("-", "");
+        session.enableQr();
+        sessionQrTokenRepository.save(new SessionQrToken(token, session));
+        return qrResponseOf(token);
+    }
+
+    @Transactional(readOnly = true)
+    public SessionQrResponse getQr(Member member, Long sessionId) {
+        Session session = findSessionForManagement(member, sessionId);
+        if (!session.isQrEnabled()) {
+            throw new ConflictException("현재 출석 QR이 꺼져 있습니다.");
+        }
+        SessionQrToken qrToken = sessionQrTokenRepository.findBySessionId(sessionId)
+                .orElseThrow(() -> new ConflictException("출석 QR을 찾을 수 없습니다."));
+        return qrResponseOf(qrToken.getToken());
+    }
+
+    @Transactional
+    public SessionResponse disableQr(Member member, Long sessionId) {
+        Session session = findSessionForManagement(member, sessionId);
+        session.disableQr();
+        sessionQrTokenRepository.findBySessionId(sessionId).ifPresent(sessionQrTokenRepository::delete);
+        return SessionResponse.of(session);
+    }
+
+    @Transactional
+    public SessionCheckInResponse checkIn(String token, String memberLoginId) {
+        SessionQrTokenRepository.CheckInToken qrToken = sessionQrTokenRepository.findCheckInTokenByToken(token)
+                .orElseThrow(() -> new ConflictException("유효하지 않은 출석 QR입니다."));
+        if (!qrToken.getQrEnabled()) {
+            throw new ConflictException("현재 출석 QR이 꺼져 있습니다.");
+        }
+        if (!sessionRepository.isActivityMember(qrToken.getSessionId(), memberLoginId)) {
+            throw new ConflictException("이 세미나·스터디의 신청자만 QR 출석할 수 있습니다.");
+        }
+        boolean alreadyCheckedIn = sessionRepository.insertAttendanceIfAbsent(qrToken.getSessionId(), memberLoginId) == 0;
+        return new SessionCheckInResponse(alreadyCheckedIn);
     }
 
     public List<Map.Entry<Member, Boolean>> findActivityMembersWithAttendanceBySessionId(Long sessionId) {
@@ -118,5 +177,20 @@ public class SessionService {
 
     private Member findByMemberLoginId(String memberLoginId) {
         return memberRepository.findByLoginID(memberLoginId).orElseThrow(() -> new NoSuchElementException("해당하는 세션이 없습니다"));
+    }
+
+    private Session findSessionForManagement(Member member, Long sessionId) {
+        Session session = sessionRepository.findById(sessionId)
+                .orElseThrow(() -> new NoSuchElementException("해당하는 세션이 없습니다"));
+        if (!member.isAdmin() && !checkUserIsHost(member.getUUID(), session.getActivity().getHost().getUUID())) {
+            throw new NotHostException("호스트나 관리자만 출석 QR을 관리할 수 있습니다");
+        }
+        return session;
+    }
+
+    private SessionQrResponse qrResponseOf(String token) {
+        String checkInUrl = checkInBaseUrl + "/" + token;
+        String imageDataUrl = "data:image/png;base64," + Base64.getEncoder().encodeToString(new Qr(checkInUrl).createQrImage());
+        return new SessionQrResponse(checkInUrl, imageDataUrl);
     }
 }

@@ -42,6 +42,9 @@ public class Session {
     @Column(name = "hour", nullable = false, columnDefinition = "bigint default 1")
     private Long hour;
 
+    @Column(name = "qr_enabled", nullable = false)
+    private boolean qrEnabled;
+
     @ElementCollection(fetch = LAZY)
     @CollectionTable(name = "attendance", joinColumns = @JoinColumn(name = "session_id"), uniqueConstraints = {@UniqueConstraint(columnNames = {"session_id", "member_loginid"})})
     @Column(name = "member_loginid")
@@ -79,6 +82,14 @@ public class Session {
     @Transactional
     public void attend(List<String> attendances) {
         this.attendedMemberLoginIDs.addAll(attendances);
+    }
+
+    public void enableQr() {
+        this.qrEnabled = true;
+    }
+
+    public void disableQr() {
+        this.qrEnabled = false;
     }
 
     @Override

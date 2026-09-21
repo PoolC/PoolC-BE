@@ -16,18 +16,20 @@ public class SessionResponse {
     private final String description;
     private final Long hour;
     private final List<String> fileList;
+    private final boolean qrEnabled;
 
     @JsonCreator
-    public SessionResponse(Long id, Long sessionNumber, LocalDate date, String description, Long hour, List<String> fileList) {
+    public SessionResponse(Long id, Long sessionNumber, LocalDate date, String description, Long hour, List<String> fileList, boolean qrEnabled) {
         this.id = id;
         this.sessionNumber = sessionNumber;
         this.date = date;
         this.description = description;
         this.hour = hour;
         this.fileList = fileList;
+        this.qrEnabled = qrEnabled;
     }
 
     public static SessionResponse of(Session session) {
-        return new SessionResponse(session.getId(), session.getSessionNumber(), session.getDate(), session.getDescription(), session.getHour(), session.getFileList());
+        return new SessionResponse(session.getId(), session.getSessionNumber(), session.getDate(), session.getDescription(), session.getHour(), session.getFileList(), session.isQrEnabled());
     }
 }

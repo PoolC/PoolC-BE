@@ -68,6 +68,26 @@ public class ActivityController {
         return ResponseEntity.ok().body(SessionResponse.of(sessionService.findOneSessionByID(id)));
     }
 
+    @PostMapping(value = "/session/{sessionID}/qr")
+    public ResponseEntity<SessionQrResponse> generateSessionQr(@AuthenticationPrincipal Member member, @PathVariable Long sessionID) {
+        return ResponseEntity.ok(sessionService.generateQr(member, sessionID));
+    }
+
+    @GetMapping(value = "/session/{sessionID}/qr")
+    public ResponseEntity<SessionQrResponse> getSessionQr(@AuthenticationPrincipal Member member, @PathVariable Long sessionID) {
+        return ResponseEntity.ok(sessionService.getQr(member, sessionID));
+    }
+
+    @DeleteMapping(value = "/session/{sessionID}/qr")
+    public ResponseEntity<SessionResponse> disableSessionQr(@AuthenticationPrincipal Member member, @PathVariable Long sessionID) {
+        return ResponseEntity.ok(sessionService.disableQr(member, sessionID));
+    }
+
+    @PostMapping(value = "/session/check-in/{token}")
+    public ResponseEntity<SessionCheckInResponse> checkInSession(@AuthenticationPrincipal Member member, @PathVariable String token) {
+        return ResponseEntity.ok(sessionService.checkIn(token, member.getLoginID()));
+    }
+
     @GetMapping(value = "/member/{activityID}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Map<String, List<MemberResponse>>> getActivityMembers(@PathVariable("activityID") Long activityId) {
         return ResponseEntity.ok().body(Collections.singletonMap("data", memberResponseAssembler.ofAll(activityService.findActivityMembersByActivityId(activityId))));
