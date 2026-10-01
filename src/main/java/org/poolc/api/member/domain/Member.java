@@ -55,6 +55,9 @@ public class Member extends TimestampEntity implements UserDetails {
     @Column(name = "introduction", columnDefinition = "varchar(1024)")
     private String introduction;
 
+    @Column(name = "admin_remarks", columnDefinition = "varchar(1000)")
+    private String adminRemarks;
+
     @Column(name = "is_excepted", columnDefinition = "boolean default false")
     private Boolean isExcepted = false;
 
@@ -97,6 +100,10 @@ public class Member extends TimestampEntity implements UserDetails {
         this.introduction = updateMemberRequest.getIntroduction();
     }
 
+    public void updateAdminRemarks(String adminRemarks) {
+        this.adminRemarks = adminRemarks;
+    }
+
     public boolean isAcceptedMember() {
         return isEnabled();
     }
@@ -111,6 +118,19 @@ public class Member extends TimestampEntity implements UserDetails {
 
     public String getRole() {
         return roles.getHighestRole().name();
+    }
+
+    public String getBaseRole() {
+        return roles.getBaseRole().name();
+    }
+
+    public java.util.Set<MemberRole> getAdditionalRoles() {
+        return roles.getAdditionalRoles();
+    }
+
+    public void toggleAdditionalRole(MemberRole role, boolean enabled) {
+        roles.toggleAdditionalRole(role, enabled);
+        updateIsExcepted();
     }
 
     public boolean shouldHide() {
@@ -137,6 +157,11 @@ public class Member extends TimestampEntity implements UserDetails {
 
     public void selfChangeRole(MemberRole role) {
         checkHasCorrectPermissions(role);
+
+        if (roles.isAdditionalRole(role)) {
+            toggleAdditionalRole(role, true);
+            return;
+        }
 
         if (getRole().equals(MemberRole.SUPER_ADMIN.name())) {
             throw new UnauthorizedException("Usage of super admin is prohibited");
