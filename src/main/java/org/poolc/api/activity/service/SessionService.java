@@ -63,6 +63,15 @@ public class SessionService {
     }
 
     @Transactional
+    public void deleteSession(Long id, String uuid) {
+        Session session = sessionRepository.findById(id).orElseThrow(() -> new NoSuchElementException("존재하지 않는 회차입니다"));
+        if (!checkUserIsHost(session.getActivity().getHost().getUUID(), uuid)) {
+            throw new NotHostException("호스트가 아닌 사람은 세션 정보를 삭제할 수 없습니다");
+        }
+        sessionRepository.delete(session);
+    }
+
+    @Transactional
     public void attend(String uuid, AttendanceValues values) {
         Session session = sessionRepository.findById(values.getSessionID())
                 .orElseThrow(() -> new NoSuchElementException("해당하는 세션이 없습니다"));

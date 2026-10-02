@@ -137,6 +137,24 @@ public class MemberController {
         return ResponseEntity.ok().build();
     }
 
+    @PutMapping(path = "/admin-remarks/{loginID}")
+    public ResponseEntity<Void> updateAdminRemarks(@AuthenticationPrincipal Member admin, @PathVariable String loginID, @RequestBody UpdateAdminRemarksRequest request) {
+        memberService.updateAdminRemarks(admin, loginID, request.getRemarks());
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping(path = "/additional-role/{loginID}")
+    public ResponseEntity<Void> updateAdditionalRole(@AuthenticationPrincipal Member admin, @PathVariable String loginID, @RequestBody UpdateAdditionalRoleRequest request) {
+        memberService.updateAdditionalRole(admin, loginID, request.getRole(), request.isEnabled());
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping(path = "/additional-role/me")
+    public ResponseEntity<Void> updateMyAdditionalRole(@AuthenticationPrincipal Member member, @RequestBody UpdateAdditionalRoleRequest request) {
+        memberService.updateMyAdditionalRole(member, request.getRole(), request.isEnabled());
+        return ResponseEntity.ok().build();
+    }
+
     @PutMapping(path = "/role")
     public ResponseEntity<Void> selfChangeRole(@AuthenticationPrincipal Member loginMember, @RequestBody ToggleRoleRequest role) {
         memberService.selfChangeToRole(loginMember, MemberRole.valueOf(role.getRole()));

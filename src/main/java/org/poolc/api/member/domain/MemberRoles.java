@@ -17,10 +17,15 @@ import static java.util.function.Predicate.not;
 
 @Embeddable
 public class MemberRoles {
+    private static final Set<MemberRole> ADDITIONAL_ROLES = EnumSet.of(
+            MemberRole.TECHNICIAN,
+            MemberRole.GRADUATED
+    );
     private static final Set<MemberRole> AUTOMATICALLY_EXCEPTED_ROLES = EnumSet.of(
             MemberRole.SUPER_ADMIN,
             MemberRole.ADMIN,
             MemberRole.TECHNICIAN,
+            MemberRole.GRADUATED_INACTIVE,
             MemberRole.GRADUATED,
             MemberRole.COMPLETE,
             MemberRole.INACTIVE
@@ -60,6 +65,21 @@ public class MemberRoles {
                 .orElse(MemberRole.PUBLIC);
     }
 
+    public MemberRole getBaseRole() {
+        return Stream.of(MemberRole.values())
+                .filter(role -> !ADDITIONAL_ROLES.contains(role))
+                .filter(roles::contains)
+                .findFirst()
+                .orElse(MemberRole.PUBLIC);
+    }
+
+    public Set<MemberRole> getAdditionalRoles() {
+        return Stream.of(MemberRole.values())
+                .filter(ADDITIONAL_ROLES::contains)
+                .filter(roles::contains)
+                .collect(Collectors.toSet());
+    }
+
     public boolean isAcceptedMember() {
         return !roles.contains(MemberRole.UNACCEPTED);
     }
@@ -78,13 +98,35 @@ public class MemberRoles {
     }
 
     public void changeRole(MemberRole role) {
+        if (ADDITIONAL_ROLES.contains(role)) {
+            toggleAdditionalRole(role, true);
+            return;
+        }
         if (role.equals(MemberRole.SUPER_ADMIN)) {
             throw new UnauthorizedException("Usage of super admin is prohibited");
         }
 
+        Set<MemberRole> preservedAdditionalRoles = getAdditionalRoles();
         roles.clear();
         roles.add(role);
         roles.addAll(role.getRequiredRoles());
+        if (role.isMember()) {
+            roles.addAll(preservedAdditionalRoles);
+        }
+    }
+
+    public void toggleAdditionalRole(MemberRole role, boolean enabled) {
+        if (!ADDITIONAL_ROLES.contains(role)) {
+            throw new IllegalArgumentException("Role is not an additional role: " + role.name());
+        }
+        if (!roles.contains(MemberRole.MEMBER)) {
+            throw new ConflictException("Additional roles can only be assigned to members");
+        }
+        if (enabled) {
+            roles.add(role);
+        } else {
+            roles.remove(role);
+        }
     }
 
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -96,6 +138,10 @@ public class MemberRoles {
             authorities.add(new SimpleGrantedAuthority(MemberRole.ADMIN.name()));
         }
         return authorities;
+    }
+
+    public boolean isAdditionalRole(MemberRole role) {
+        return ADDITIONAL_ROLES.contains(role);
     }
 
     public boolean checkIsExcepted() {

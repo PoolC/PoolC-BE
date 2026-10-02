@@ -27,4 +27,11 @@ public class MemberResponseAssembler {
                 .map(member -> MemberResponse.of(member, profileImageUrls.get(member.getUUID())))
                 .collect(Collectors.toList());
     }
+
+    public List<MemberResponse> ofAllForAdmin(List<Member> members) {
+        Map<String, String> profileImageUrls = featuredCollectibleService.getProfileSpriteUrls(members);
+        return members.stream()
+                .map(member -> MemberResponse.ofAdminList(member, profileImageUrls.get(member.getUUID())))
+                .collect(Collectors.toList());
+    }
 }

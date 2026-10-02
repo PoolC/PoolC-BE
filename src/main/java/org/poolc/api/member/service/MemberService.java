@@ -90,7 +90,52 @@ public class MemberService {
         List<Member> visibleMembers = members.stream()
                 .filter(responseMember -> (!Optional.ofNullable(loginMember).isEmpty() && loginMember.isAdmin() || !responseMember.shouldHide()))
                 .collect(Collectors.toList());
-        return memberResponseAssembler.ofAll(visibleMembers);
+        return loginMember != null && loginMember.isAdmin()
+                ? memberResponseAssembler.ofAllForAdmin(visibleMembers)
+                : memberResponseAssembler.ofAll(visibleMembers);
+    }
+
+    @Transactional
+    public void updateAdminRemarks(Member admin, String loginID, String remarks) {
+        if (admin == null || !admin.isAdmin()) {
+            throw new UnauthorizedException("Only admins can update member remarks");
+        }
+        if (remarks != null && remarks.length() > 1000) {
+            throw new IllegalArgumentException("비고는 1000자 이내로 입력해주세요.");
+        }
+        Member targetMember = getMemberByLoginID(loginID);
+        targetMember.updateAdminRemarks(remarks == null || remarks.trim().isEmpty() ? null : remarks.trim());
+    }
+
+    @Transactional
+    public void updateAdditionalRole(Member admin, String loginID, MemberRole role, boolean enabled) {
+        if (admin == null || !admin.isAdmin()) {
+            throw new UnauthorizedException("Only admins can update member roles");
+        }
+        if (role == null) {
+            throw new IllegalArgumentException("추가 역할을 선택해주세요.");
+        }
+        Member targetMember = getMemberByLoginID(loginID);
+        if (MemberRole.SUPER_ADMIN.name().equals(targetMember.getRole())) {
+            throw new UnauthorizedException("Usage of super admin is prohibited");
+        }
+        targetMember.toggleAdditionalRole(role, enabled);
+        memberRepository.saveAndFlush(targetMember);
+    }
+
+    @Transactional
+    public void updateMyAdditionalRole(Member member, MemberRole role, boolean enabled) {
+        if (member == null) {
+            throw new UnauthenticatedException("로그인이 필요합니다.");
+        }
+        if (role == null) {
+            throw new IllegalArgumentException("추가 역할을 선택해주세요.");
+        }
+        if (!role.isSelfToggleable()) {
+            throw new UnauthorizedException("이 역할은 본인이 변경할 수 없습니다.");
+        }
+        member.toggleAdditionalRole(role, enabled);
+        memberRepository.saveAndFlush(member);
     }
 
     public List<MemberResponse> getAllMembersResponseByName(String name) {

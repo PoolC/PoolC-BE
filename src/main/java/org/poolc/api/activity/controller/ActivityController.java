@@ -124,6 +124,12 @@ public class ActivityController {
         return ResponseEntity.ok().build();
     }
 
+    @DeleteMapping(value = "/session/{sessionID}")
+    public ResponseEntity<Void> deleteSession(@AuthenticationPrincipal Member member, @PathVariable("sessionID") Long id) {
+        sessionService.deleteSession(id, member.getUUID());
+        return ResponseEntity.ok().build();
+    }
+
     @PutMapping(value = "/open/{activityID}")
     public ResponseEntity<Void> openActivity(@PathVariable("activityID") Long id) {
         activityService.openActivity(id);
