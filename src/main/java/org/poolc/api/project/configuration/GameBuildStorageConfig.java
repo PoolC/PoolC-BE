@@ -3,6 +3,7 @@ package org.poolc.api.project.configuration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
@@ -34,7 +35,7 @@ public class GameBuildStorageConfig {
     }
 
     @Bean
-    @ConditionalOnProperty(name = "game-build.s3.admin-endpoint")
+    @ConditionalOnExpression("'${game-build.enabled:false}' == 'true' && '${game-build.s3.admin-endpoint:}' != ''")
     public S3Client gameBuildAdminS3Client(
             @Value("${file.s3.region:ap-northeast-2}") String region,
             @Value("${game-build.s3.admin-endpoint}") String endpoint,

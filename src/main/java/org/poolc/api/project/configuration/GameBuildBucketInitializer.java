@@ -1,7 +1,7 @@
 package org.poolc.api.project.configuration;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.CreateBucketRequest;
@@ -12,7 +12,7 @@ import software.amazon.awssdk.services.s3.model.HeadBucketRequest;
 import javax.annotation.PostConstruct;
 
 @Component
-@ConditionalOnProperty(name = "game-build.s3.admin-endpoint")
+@ConditionalOnExpression("'${game-build.enabled:false}' == 'true' && '${game-build.s3.admin-endpoint:}' != ''")
 public class GameBuildBucketInitializer {
     private final S3Client s3Client;
     private final String bucket;
