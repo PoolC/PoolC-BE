@@ -58,6 +58,8 @@ import javax.servlet.http.HttpServletRequest;
 @Transactional(readOnly = true)
 public class GamificationService {
     private static final String ACTIVITY_HOURS = "ACTIVITY_HOURS";
+    private static final LocalDateTime HIDDEN_INITIAL_BULK_GRANT_AT =
+            LocalDateTime.of(2026, 9, 8, 1, 12, 42, 360_542_000);
     private static final List<String> ADMIN_BALL_GRANT_SOURCES = List.of(
             "ADMIN_BALL_GRANT", "BULK_GRANT", "MANUAL_GRANT", "ADMIN_MANUAL_GRANT",
             "POOLC_ADMIN_GRANT", "MANUAL_ADMIN", "ADMIN_GRANT", "ADMIN_MANUAL", "PROD_MANUAL_GRANT");
@@ -480,6 +482,10 @@ public class GamificationService {
 
     public List<AdminBallGrantResponse> getAdminBallGrantHistory() {
         return ballTransactionRepository.findAdminBallGrants(BallTransactionType.ADMIN_GRANT, ADMIN_BALL_GRANT_SOURCES).stream()
+                .filter(transaction -> !("BULK_GRANT".equals(transaction.getSourceType())
+                        && transaction.getBallType() == BallType.NORMAL
+                        && transaction.getAmount() == 30
+                        && HIDDEN_INITIAL_BULK_GRANT_AT.equals(transaction.getCreatedAt())))
                 .map(AdminBallGrantResponse::new)
                 .collect(Collectors.toList());
     }
