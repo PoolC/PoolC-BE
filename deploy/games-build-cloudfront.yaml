@@ -1,0 +1,102 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Private S3 storage and isolated CloudFront delivery for PoolC project game builds.
+
+Parameters:
+  GameBuildBucketName:
+    Type: String
+    Default: poolc-game-builds-s3
+  GameHostName:
+    Type: String
+    Default: games.poolc.org
+  AcmCertificateArn:
+    Type: String
+    Description: ACM certificate ARN for the game host, issued in us-east-1.
+
+Resources:
+  GameBuildBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref GameBuildBucketName
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      CorsConfiguration:
+        CorsRules:
+          - AllowedOrigins:
+              - https://poolc.org
+              - https://dev.poolc.org
+              - http://localhost:3000
+            AllowedMethods: [GET, HEAD, PUT]
+            AllowedHeaders: ['*']
+            ExposedHeaders: [ETag]
+            MaxAge: 3600
+
+  GameBuildOriginAccessControl:
+    Type: AWS::CloudFront::OriginAccessControl
+    Properties:
+      OriginAccessControlConfig:
+        Name: !Sub '${GameHostName}-s3-oac'
+        Description: Read private PoolC game builds from S3.
+        OriginAccessControlOriginType: s3
+        SigningBehavior: always
+        SigningProtocol: sigv4
+
+  GameBuildDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        Comment: !Sub 'PoolC project games - ${GameHostName}'
+        Aliases: [!Ref GameHostName]
+        DefaultRootObject: index.html
+        HttpVersion: http2and3
+        Origins:
+          - Id: GameBuildBucket
+            DomainName: !GetAtt GameBuildBucket.RegionalDomainName
+            OriginAccessControlId: !GetAtt GameBuildOriginAccessControl.Id
+            S3OriginConfig:
+              OriginAccessIdentity: ''
+        DefaultCacheBehavior:
+          TargetOriginId: GameBuildBucket
+          ViewerProtocolPolicy: redirect-to-https
+          AllowedMethods: [GET, HEAD, OPTIONS]
+          CachedMethods: [GET, HEAD, OPTIONS]
+          Compress: true
+          CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
+        ViewerCertificate:
+          AcmCertificateArn: !Ref AcmCertificateArn
+          SslSupportMethod: sni-only
+          MinimumProtocolVersion: TLSv1.2_2021
+
+  GameBuildBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref GameBuildBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: AllowCloudFrontRead
+            Effect: Allow
+            Principal:
+              Service: cloudfront.amazonaws.com
+            Action: s3:GetObject
+            Resource: !Sub '${GameBuildBucket.Arn}/games/*'
+            Condition:
+              StringEquals:
+                AWS:SourceArn: !Sub 'arn:${AWS::Partition}:cloudfront::${AWS::AccountId}:distribution/${GameBuildDistribution}'
+
+Outputs:
+  BucketName:
+    Value: !Ref GameBuildBucket
+  DistributionId:
+    Value: !Ref GameBuildDistribution
+  DistributionDomainName:
+    Value: !GetAtt GameBuildDistribution.DomainName
+  GameBaseUrl:
+    Value: !Sub 'https://${GameHostName}'

@@ -17,28 +17,21 @@ services:
       retries: 20
 
   minio:
-    image: minio/minio:latest
+    image: poolc-minio:local
+    build:
+      context: ./docker/minio
+      dockerfile: Dockerfile
     container_name: poolc-minio
     command: server /data --console-address ":9001"
     environment:
-      MINIO_ROOT_USER: poolc
-      MINIO_ROOT_PASSWORD: poolc_dev_password
+      MINIO_ROOT_USER: ${GAME_BUILD_S3_ACCESS_KEY:-poolc}
+      MINIO_ROOT_PASSWORD: ${GAME_BUILD_S3_SECRET_KEY:-poolc_dev_password}
+      MINIO_API_CORS_ALLOW_ORIGIN: http://localhost:3000
     ports:
       - "9000:9000"
       - "9001:9001"
     volumes:
       - poolc-minio-data:/data
-
-  minio-init:
-    image: minio/mc:latest
-    container_name: poolc-minio-init
-    depends_on:
-      - minio
-    entrypoint: >
-      /bin/sh -c "
-      until mc alias set local http://minio:9000 poolc poolc_dev_password; do sleep 1; done &&
-      mc mb -p local/poolc-dev || true
-      "
 
   api:
     image: eclipse-temurin:11-jdk
@@ -48,6 +41,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      minio:
+        condition: service_started
     environment:
       PROJECT_NAME_HERE_SECRET_KEY: local_dev_secret_key_for_poolc
       EXPIRE_LENGTH_IN_MILLISECONDS: "3600000"
@@ -60,6 +55,13 @@ services:
       EMAIL_PASSWORD: dummy
       KAKAO_BOOK_REST_API_KEY: ${KAKAO_BOOK_REST_API_KEY:-dummy}
       KUBERNETES_API_KEY: local-dev
+      AWS_REGION: us-east-1
+      GAME_BUILD_S3_BUCKET: poolc-dev
+      GAME_BUILD_PUBLIC_BASE_URL: http://localhost:9000/poolc-dev
+      GAME_BUILD_S3_PRESIGN_ENDPOINT: http://localhost:9000
+      GAME_BUILD_S3_ADMIN_ENDPOINT: http://minio:9000
+      GAME_BUILD_S3_ACCESS_KEY: ${GAME_BUILD_S3_ACCESS_KEY:-poolc}
+      GAME_BUILD_S3_SECRET_KEY: ${GAME_BUILD_S3_SECRET_KEY:-poolc_dev_password}
     ports:
       - "8080:8080"
     volumes:

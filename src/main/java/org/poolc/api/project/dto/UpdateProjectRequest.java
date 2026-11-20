@@ -22,10 +22,15 @@ public class UpdateProjectRequest {
     private final LocalDate endDate;
     private final String thumbnailURL;
     private final String body;
+    private final String gameURL;
     List<String> memberLoginIDs;
 
-    @JsonCreator
     public UpdateProjectRequest(String name, String description, String genre, ProjectCategory category, LocalDate startDate, LocalDate endDate, String thumbnailURL, String body, List<String> memberLoginIDs) {
+        this(name, description, genre, category, startDate, endDate, thumbnailURL, body, null, memberLoginIDs);
+    }
+
+    @JsonCreator
+    public UpdateProjectRequest(String name, String description, String genre, ProjectCategory category, LocalDate startDate, LocalDate endDate, String thumbnailURL, String body, String gameURL, List<String> memberLoginIDs) {
         this.name = name;
         this.description = description;
         this.genre = genre;
@@ -34,6 +39,7 @@ public class UpdateProjectRequest {
         this.endDate = endDate;
         this.thumbnailURL = thumbnailURL;
         this.body = body;
+        this.gameURL = gameURL;
         this.memberLoginIDs = memberLoginIDs;
     }
 

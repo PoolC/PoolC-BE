@@ -43,7 +43,7 @@ Browser → CloudFront / Cloudflare → Nginx → Spring Boot → PostgreSQL
 <img src="https://img.shields.io/badge/Docker%20Compose-required-2496ED?style=flat-square&logo=docker&logoColor=white" alt="Docker Compose" />
 
 ```bash
-docker compose -f docker-compose.local.yml up -d
+docker compose -p poolc-dev -f docker-compose.local.yml up -d --build
 ```
 
 | Service | Address |
@@ -51,12 +51,15 @@ docker compose -f docker-compose.local.yml up -d
 | Frontend | http://localhost:3000 |
 | Backend API | http://localhost:8080 |
 | PostgreSQL | localhost:5432 |
+| MinIO S3 API | http://localhost:9000 |
 | MinIO Console | http://localhost:9001 |
+
+로컬 게임 빌드는 MinIO에 저장됩니다. 개발용 접속 정보는 `poolc` / `poolc_dev_password`이며, API가 `poolc-dev` 버킷과 게임 파일의 공개 읽기 정책을 자동으로 준비합니다. Docker 설정은 `localhost:3000`의 업로드를 CORS에서 허용합니다. `GAME_BUILD_S3_ACCESS_KEY`와 `GAME_BUILD_S3_SECRET_KEY`로 개발 자격 증명을 덮어쓸 수 있습니다. 기본 자격 증명은 로컬 Docker 개발 전용입니다.
 
 개발 데이터가 필요하면 API 기동 후 seed를 실행합니다.
 
 ```bash
-docker compose -f docker-compose.local.yml exec -T postgres \
+docker compose -p poolc-dev -f docker-compose.local.yml exec -T postgres \
   psql -U poolc -d poolc < scripts/local-dev/seed.sql
 ```
 

@@ -49,6 +49,14 @@ file:
     dry-run: ${FILE_ORPHAN_CLEANUP_DRY_RUN:true}
     grace-period-hours: ${FILE_ORPHAN_CLEANUP_GRACE_PERIOD_HOURS:168}
     cron: ${FILE_ORPHAN_CLEANUP_CRON:0 30 4 * * *}
+game-build:
+  s3:
+    bucket: ${GAME_BUILD_S3_BUCKET:}
+    presign-endpoint: ${GAME_BUILD_S3_PRESIGN_ENDPOINT:}
+    admin-endpoint: ${GAME_BUILD_S3_ADMIN_ENDPOINT:}
+    access-key: ${GAME_BUILD_S3_ACCESS_KEY:}
+    secret-key: ${GAME_BUILD_S3_SECRET_KEY:}
+  public-base-url: ${GAME_BUILD_PUBLIC_BASE_URL:}
 kakao:
   book:
     api:

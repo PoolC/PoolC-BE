@@ -18,6 +18,7 @@ public class ProjectUpdateValues {
     private final LocalDate endDate;
     private final String thumbnailURL;
     private final String body;
+    private final String gameURL;
     List<String> memberLoginIDs;
 
     @JsonCreator
@@ -30,6 +31,7 @@ public class ProjectUpdateValues {
         this.endDate = request.getEndDate();
         this.thumbnailURL = request.getThumbnailURL();
         this.body = request.getBody();
+        this.gameURL = request.getGameURL();
         this.memberLoginIDs = request.getMemberLoginIDs();
     }
 }

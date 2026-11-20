@@ -18,6 +18,7 @@ public class ProjectCreateValues {
     private final LocalDate endDate;
     private final String thumbnailURL;
     private final String body;
+    private final String gameURL;
     List<String> memberLoginIDs;
 
     public ProjectCreateValues(RegisterProjectRequest request) {
@@ -29,6 +30,7 @@ public class ProjectCreateValues {
         this.endDate = request.getEndDate();
         this.thumbnailURL = request.getThumbnailURL();
         this.body = request.getBody();
+        this.gameURL = request.getGameURL();
         this.memberLoginIDs = request.getMemberLoginIDs();
     }
 }
