@@ -31,8 +31,9 @@ Cloudflare `games.poolc.org` CNAME at the distribution domain from the stack
 output (DNS-only mode).
 
 Add these SSM parameters under `/poolc/prod/backend/` before enabling game
-uploads (the feature stays disabled while either value is missing):
+uploads (the feature stays disabled until all three values are set):
 
+- `GAME_BUILD_ENABLED`: `true` to enable uploads.
 - `GAME_BUILD_S3_BUCKET`: the stack's `BucketName` output.
 - `GAME_BUILD_PUBLIC_BASE_URL`: `https://games.poolc.org`.
 

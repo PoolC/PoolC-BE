@@ -2,6 +2,7 @@ package org.poolc.api.project.service;
 
 import org.poolc.api.project.dto.GameBuildUploadRequest;
 import org.poolc.api.project.dto.GameBuildUploadResponse;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
@@ -26,20 +27,23 @@ public class GameBuildUploadService {
     private static final long MAX_FILE_SIZE = 300L * 1024 * 1024;
     private static final long MAX_BUILD_SIZE = 300L * 1024 * 1024;
 
-    private final S3Presigner presigner;
+    private final ObjectProvider<S3Presigner> presignerProvider;
     private final String bucket;
     private final String publicBaseUrl;
+    private final boolean enabled;
 
-    public GameBuildUploadService(S3Presigner presigner,
+    public GameBuildUploadService(ObjectProvider<S3Presigner> presignerProvider,
                                   @Value("${game-build.s3.bucket:}") String bucket,
-                                  @Value("${game-build.public-base-url:}") String publicBaseUrl) {
-        this.presigner = presigner;
+                                  @Value("${game-build.public-base-url:}") String publicBaseUrl,
+                                  @Value("${game-build.enabled:false}") boolean enabled) {
+        this.presignerProvider = presignerProvider;
         this.bucket = bucket;
         this.publicBaseUrl = publicBaseUrl;
+        this.enabled = enabled;
     }
 
     public boolean isConfigured() {
-        return !bucket.isBlank() && !publicBaseUrl.isBlank();
+        return enabled && !bucket.isBlank() && !publicBaseUrl.isBlank();
     }
 
     public boolean isAllowedGameUrl(String gameURL) {
@@ -106,6 +110,10 @@ public class GameBuildUploadService {
         }
 
         String releaseId = UUID.randomUUID().toString();
+        S3Presigner presigner = presignerProvider.getIfAvailable();
+        if (presigner == null) {
+            throw new IllegalStateException("게임 빌드 업로드 서명기가 설정되지 않았습니다.");
+        }
         List<GameBuildUploadResponse.UploadTarget> targets = new ArrayList<>();
         for (GameBuildUploadRequest.FileEntry file : files) {
             String path = normalizePath(file.getPath());

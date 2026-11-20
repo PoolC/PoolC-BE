@@ -16,6 +16,7 @@ import java.net.URI;
 @Configuration
 public class GameBuildStorageConfig {
     @Bean
+    @ConditionalOnProperty(name = "game-build.enabled", havingValue = "true")
     public S3Presigner gameBuildS3Presigner(
             @Value("${file.s3.region:ap-northeast-2}") String region,
             @Value("${game-build.s3.presign-endpoint:}") String endpoint,
