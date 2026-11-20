@@ -30,6 +30,8 @@ import org.poolc.api.activity.domain.Session;
 import org.poolc.api.activity.repository.SessionRepository;
 import org.poolc.api.activity.repository.ActivityRepository;
 import org.poolc.api.member.domain.Member;
+import org.poolc.api.member.domain.MemberRole;
+import org.poolc.api.auth.exception.UnauthorizedException;
 import org.poolc.api.member.dto.MyActivitySummaryResponse;
 import org.poolc.api.member.repository.MemberRepository;
 import org.poolc.api.member.service.MemberService;
@@ -430,11 +432,13 @@ public class GamificationService {
 
     @Transactional
     public AdminPokemonGrantResponse grantPokemon(Member admin, AdminPokemonGrantRequest request) {
+        requireTechnician(admin);
         if (request == null || request.getLoginID() == null || request.getLoginID().isBlank() || request.getCollectibleId() == null) {
             throw new ConflictException("지급할 회원과 포켓몬을 선택해 주세요.");
         }
         Member recipient = memberRepository.findByLoginID(request.getLoginID())
                 .orElseThrow(() -> new NoSuchElementException("회원을 찾을 수 없습니다."));
+        requireOtherMember(admin, recipient);
         CollectibleCatalog collectible = collectibleCatalogRepository.findById(request.getCollectibleId())
                 .filter(CollectibleCatalog::isEnabled)
                 .orElseThrow(() -> new NoSuchElementException("포켓몬을 찾을 수 없습니다."));
@@ -460,6 +464,7 @@ public class GamificationService {
 
     @Transactional
     public AdminBallGrantResponse grantBalls(Member admin, AdminBallGrantRequest request) {
+        requireTechnician(admin);
         if (request == null || request.getLoginID() == null || request.getLoginID().isBlank()
                 || request.getBallType() == null || request.getAmount() == null || request.getAmount() <= 0) {
             throw new ConflictException("회원, 포켓볼 종류와 양수를 입력해 주세요.");
@@ -469,6 +474,7 @@ public class GamificationService {
         }
         Member recipient = memberRepository.findByLoginID(request.getLoginID())
                 .orElseThrow(() -> new NoSuchElementException("회원을 찾을 수 없습니다."));
+        requireOtherMember(admin, recipient);
         BallTransaction transaction = ballTransactionRepository.save(new BallTransaction(
                 recipient,
                 request.getAmount(),
@@ -488,6 +494,18 @@ public class GamificationService {
                         && HIDDEN_INITIAL_BULK_GRANT_AT.equals(transaction.getCreatedAt())))
                 .map(AdminBallGrantResponse::new)
                 .collect(Collectors.toList());
+    }
+
+    private void requireTechnician(Member member) {
+        if (member == null || !member.getRoles().hasRole(MemberRole.TECHNICIAN)) {
+            throw new UnauthorizedException("기여자 권한이 필요합니다.");
+        }
+    }
+
+    private void requireOtherMember(Member giver, Member recipient) {
+        if (giver.getUUID().equals(recipient.getUUID())) {
+            throw new ConflictException("자기 자신에게는 지급할 수 없습니다.");
+        }
     }
 
     public List<DrawResponse> getDraws(Member member) {

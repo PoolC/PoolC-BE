@@ -21,6 +21,7 @@ import org.poolc.api.gamification.service.CatalogSyncWorker;
 import org.poolc.api.gamification.service.FeaturedCollectibleService;
 import org.poolc.api.gamification.service.GamificationService;
 import org.poolc.api.member.domain.Member;
+import org.poolc.api.member.domain.MemberRole;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -119,33 +120,33 @@ public class GamificationController {
 
     @GetMapping("/admin/catalog")
     public ResponseEntity<List<CollectionItemResponse>> getAdminCatalog(@AuthenticationPrincipal Member member) {
-        requireAdmin(member);
+        requireTechnician(member);
         return ResponseEntity.ok(gamificationService.getAdminCatalog());
     }
 
     @PostMapping("/admin/pokemon-grants")
     public ResponseEntity<AdminPokemonGrantResponse> grantPokemon(
             @AuthenticationPrincipal Member member, @RequestBody AdminPokemonGrantRequest request) {
-        requireAdmin(member);
+        requireTechnician(member);
         return ResponseEntity.status(HttpStatus.CREATED).body(gamificationService.grantPokemon(member, request));
     }
 
     @GetMapping("/admin/pokemon-grants")
     public ResponseEntity<List<AdminPokemonGrantResponse>> getPokemonGrantHistory(@AuthenticationPrincipal Member member) {
-        requireAdmin(member);
+        requireTechnician(member);
         return ResponseEntity.ok(gamificationService.getAdminGrantHistory());
     }
 
     @PostMapping("/admin/ball-grants")
     public ResponseEntity<AdminBallGrantResponse> grantBalls(
             @AuthenticationPrincipal Member member, @RequestBody AdminBallGrantRequest request) {
-        requireAdmin(member);
+        requireTechnician(member);
         return ResponseEntity.status(HttpStatus.CREATED).body(gamificationService.grantBalls(member, request));
     }
 
     @GetMapping("/admin/ball-grants")
     public ResponseEntity<List<AdminBallGrantResponse>> getBallGrantHistory(@AuthenticationPrincipal Member member) {
-        requireAdmin(member);
+        requireTechnician(member);
         return ResponseEntity.ok(gamificationService.getAdminBallGrantHistory());
     }
 
@@ -160,6 +161,12 @@ public class GamificationController {
     private void requireAdmin(Member member) {
         if (member == null || !member.isAdmin()) {
             throw new UnauthorizedException("관리자 권한이 필요합니다.");
+        }
+    }
+
+    private void requireTechnician(Member member) {
+        if (member == null || !member.getRoles().hasRole(MemberRole.TECHNICIAN)) {
+            throw new UnauthorizedException("기여자 권한이 필요합니다.");
         }
     }
 }
