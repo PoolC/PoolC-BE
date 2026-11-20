@@ -12,6 +12,10 @@ import org.poolc.api.gamification.dto.DrawCollectibleRequest;
 import org.poolc.api.gamification.dto.GameSummaryResponse;
 import org.poolc.api.gamification.dto.FeaturedCollectibleResponse;
 import org.poolc.api.gamification.dto.UpdateFeaturedCollectibleRequest;
+import org.poolc.api.gamification.dto.AdminPokemonGrantRequest;
+import org.poolc.api.gamification.dto.AdminPokemonGrantResponse;
+import org.poolc.api.gamification.dto.AdminBallGrantRequest;
+import org.poolc.api.gamification.dto.AdminBallGrantResponse;
 import org.poolc.api.gamification.service.CatalogSyncService;
 import org.poolc.api.gamification.service.CatalogSyncWorker;
 import org.poolc.api.gamification.service.FeaturedCollectibleService;
@@ -111,6 +115,38 @@ public class GamificationController {
         CatalogSyncRun run = catalogSyncService.startSync();
         catalogSyncWorker.synchronize(run.getId());
         return ResponseEntity.accepted().body(new CatalogSyncRunResponse(run));
+    }
+
+    @GetMapping("/admin/catalog")
+    public ResponseEntity<List<CollectionItemResponse>> getAdminCatalog(@AuthenticationPrincipal Member member) {
+        requireAdmin(member);
+        return ResponseEntity.ok(gamificationService.getAdminCatalog());
+    }
+
+    @PostMapping("/admin/pokemon-grants")
+    public ResponseEntity<AdminPokemonGrantResponse> grantPokemon(
+            @AuthenticationPrincipal Member member, @RequestBody AdminPokemonGrantRequest request) {
+        requireAdmin(member);
+        return ResponseEntity.status(HttpStatus.CREATED).body(gamificationService.grantPokemon(member, request));
+    }
+
+    @GetMapping("/admin/pokemon-grants")
+    public ResponseEntity<List<AdminPokemonGrantResponse>> getPokemonGrantHistory(@AuthenticationPrincipal Member member) {
+        requireAdmin(member);
+        return ResponseEntity.ok(gamificationService.getAdminGrantHistory());
+    }
+
+    @PostMapping("/admin/ball-grants")
+    public ResponseEntity<AdminBallGrantResponse> grantBalls(
+            @AuthenticationPrincipal Member member, @RequestBody AdminBallGrantRequest request) {
+        requireAdmin(member);
+        return ResponseEntity.status(HttpStatus.CREATED).body(gamificationService.grantBalls(member, request));
+    }
+
+    @GetMapping("/admin/ball-grants")
+    public ResponseEntity<List<AdminBallGrantResponse>> getBallGrantHistory(@AuthenticationPrincipal Member member) {
+        requireAdmin(member);
+        return ResponseEntity.ok(gamificationService.getAdminBallGrantHistory());
     }
 
     @GetMapping("/admin/catalog/sync/latest")

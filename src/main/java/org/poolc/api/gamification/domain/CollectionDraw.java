@@ -27,6 +27,10 @@ public class CollectionDraw {
     @JoinColumn(name = "collectible_id", nullable = false)
     private CollectibleCatalog collectible;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "granted_by_uuid", referencedColumnName = "UUID")
+    private Member grantedBy;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "rarity_at_draw", nullable = false, length = 20)
     private CollectibleRarity rarityAtDraw;
@@ -41,8 +45,13 @@ public class CollectionDraw {
     }
 
     public CollectionDraw(Member member, CollectibleCatalog collectible, boolean shiny) {
+        this(member, collectible, shiny, null);
+    }
+
+    public CollectionDraw(Member member, CollectibleCatalog collectible, boolean shiny, Member grantedBy) {
         this.member = member;
         this.collectible = collectible;
+        this.grantedBy = grantedBy;
         this.rarityAtDraw = collectible.getRarity();
         this.shiny = shiny;
         this.drawnAt = LocalDateTime.now();

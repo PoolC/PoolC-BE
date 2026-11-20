@@ -21,4 +21,7 @@ public interface CollectionDrawRepository extends JpaRepository<CollectionDraw, 
             + "where d.member.UUID = :memberUuid and d.collectible.id = :collectibleId and d.shiny = :shiny")
     boolean existsByMemberUuidAndCollectibleIdAndShiny(
             @Param("memberUuid") String memberUuid, @Param("collectibleId") Long collectibleId, @Param("shiny") boolean shiny);
+
+    @Query("select d from CollectionDraw d join fetch d.collectible join fetch d.member left join fetch d.grantedBy order by d.drawnAt desc")
+    List<CollectionDraw> findAllForAdminHistory();
 }
