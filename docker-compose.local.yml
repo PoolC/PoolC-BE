@@ -56,6 +56,7 @@ services:
       KAKAO_BOOK_REST_API_KEY: ${KAKAO_BOOK_REST_API_KEY:-dummy}
       KUBERNETES_API_KEY: local-dev
       AWS_REGION: us-east-1
+      GAME_BUILD_ENABLED: "true"
       GAME_BUILD_S3_BUCKET: poolc-dev
       GAME_BUILD_PUBLIC_BASE_URL: http://localhost:9000/poolc-dev
       GAME_BUILD_S3_PRESIGN_ENDPOINT: http://localhost:9000

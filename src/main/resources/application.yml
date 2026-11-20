@@ -50,6 +50,7 @@ file:
     grace-period-hours: ${FILE_ORPHAN_CLEANUP_GRACE_PERIOD_HOURS:168}
     cron: ${FILE_ORPHAN_CLEANUP_CRON:0 30 4 * * *}
 game-build:
+  enabled: ${GAME_BUILD_ENABLED:false}
   s3:
     bucket: ${GAME_BUILD_S3_BUCKET:}
     presign-endpoint: ${GAME_BUILD_S3_PRESIGN_ENDPOINT:}
