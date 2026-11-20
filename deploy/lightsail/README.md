@@ -25,10 +25,10 @@ Project game ZIPs are unpacked in the admin browser and uploaded directly to a
 private S3 bucket with short-lived presigned PUT URLs. They are delivered by a
 dedicated CloudFront distribution on `games.poolc.org`; game HTML must not be
 served from the `poolc.org` frontend origin. Deploy
-`../games-build-cloudfront.yaml` in AWS CloudFormation, providing an ACM
-certificate ARN issued in `us-east-1` for `games.poolc.org`. Point the
-Cloudflare `games.poolc.org` CNAME at the distribution domain from the stack
-output (DNS-only mode).
+`../games-build-cloudfront.yaml` in `ap-northeast-2` AWS CloudFormation, providing an ACM
+certificate ARN issued in `us-east-1` for `games.poolc.org`. Add the ACM DNS
+validation CNAME to the `poolc.org` Route53 hosted zone before creating the
+stack. The stack creates Route53 A and AAAA aliases for the game host.
 
 Add these SSM parameters under `/poolc/prod/backend/` before enabling game
 uploads (the feature stays disabled until all three values are set):

@@ -11,6 +11,9 @@ Parameters:
   AcmCertificateArn:
     Type: String
     Description: ACM certificate ARN for the game host, issued in us-east-1.
+  Route53HostedZoneId:
+    Type: String
+    Default: Z02544952040FYJF2VAM0
 
 Resources:
   GameBuildBucket:
@@ -90,6 +93,28 @@ Resources:
             Condition:
               StringEquals:
                 AWS:SourceArn: !Sub 'arn:${AWS::Partition}:cloudfront::${AWS::AccountId}:distribution/${GameBuildDistribution}'
+
+  GameHostAliasA:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref Route53HostedZoneId
+      Name: !Ref GameHostName
+      Type: A
+      AliasTarget:
+        DNSName: !GetAtt GameBuildDistribution.DomainName
+        HostedZoneId: Z2FDTNDATAQYW2
+        EvaluateTargetHealth: false
+
+  GameHostAliasAAAA:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref Route53HostedZoneId
+      Name: !Ref GameHostName
+      Type: AAAA
+      AliasTarget:
+        DNSName: !GetAtt GameBuildDistribution.DomainName
+        HostedZoneId: Z2FDTNDATAQYW2
+        EvaluateTargetHealth: false
 
 Outputs:
   BucketName:
