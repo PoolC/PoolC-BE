@@ -151,6 +151,9 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers(HttpMethod.PUT,"/badge").hasAnyAuthority(MemberRole.ADMIN.name())
                 .antMatchers(HttpMethod.DELETE,"/badge").hasAnyAuthority(MemberRole.ADMIN.name())
 
+                .antMatchers(HttpMethod.GET, "/gamification/admin/catalog").hasAuthority(MemberRole.TECHNICIAN.name())
+                .antMatchers("/gamification/admin/pokemon-grants", "/gamification/admin/ball-grants")
+                    .hasAuthority(MemberRole.TECHNICIAN.name())
                 .antMatchers("/gamification/admin/**").hasAuthority(MemberRole.ADMIN.name())
                 .antMatchers("/gamification/**").hasAuthority(MemberRole.MEMBER.name())
 
