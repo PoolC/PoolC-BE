@@ -17,6 +17,10 @@ import org.poolc.api.gamification.dto.AchievementResponse;
 import org.poolc.api.gamification.dto.BallBalancesResponse;
 import org.poolc.api.gamification.dto.DrawResponse;
 import org.poolc.api.gamification.dto.GameSummaryResponse;
+import org.poolc.api.gamification.dto.AdminPokemonGrantRequest;
+import org.poolc.api.gamification.dto.AdminPokemonGrantResponse;
+import org.poolc.api.gamification.dto.AdminBallGrantRequest;
+import org.poolc.api.gamification.dto.AdminBallGrantResponse;
 import org.poolc.api.gamification.dto.ShinyDrawStatus;
 import org.poolc.api.gamification.repository.BallTransactionRepository;
 import org.poolc.api.gamification.repository.CollectionDrawRepository;
@@ -409,6 +413,71 @@ public class GamificationService {
                             draws.stream().anyMatch(draw -> !draw.isShiny()),
                             draws.stream().anyMatch(CollectionDraw::isShiny));
                 })
+                .collect(Collectors.toList());
+    }
+
+    public List<CollectionItemResponse> getAdminCatalog() {
+        return collectibleCatalogRepository.findAllByOrderByGenerationAscExternalIdAsc().stream()
+                .filter(CollectibleCatalog::isEnabled)
+                .map(collectible -> new CollectionItemResponse(collectible, false, false))
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public AdminPokemonGrantResponse grantPokemon(Member admin, AdminPokemonGrantRequest request) {
+        if (request == null || request.getLoginID() == null || request.getLoginID().isBlank() || request.getCollectibleId() == null) {
+            throw new ConflictException("지급할 회원과 포켓몬을 선택해 주세요.");
+        }
+        Member recipient = memberRepository.findByLoginID(request.getLoginID())
+                .orElseThrow(() -> new NoSuchElementException("회원을 찾을 수 없습니다."));
+        CollectibleCatalog collectible = collectibleCatalogRepository.findById(request.getCollectibleId())
+                .filter(CollectibleCatalog::isEnabled)
+                .orElseThrow(() -> new NoSuchElementException("포켓몬을 찾을 수 없습니다."));
+        if (collectionDrawRepository.existsByMemberUuidAndCollectibleIdAndShiny(
+                recipient.getUUID(), collectible.getId(), request.isShiny())) {
+            throw new ConflictException("이미 보유한 포켓몬입니다.");
+        }
+        CollectionDraw grant = collectionDrawRepository.save(
+                new CollectionDraw(recipient, collectible, request.isShiny(), admin));
+        return new AdminPokemonGrantResponse(grant, false);
+    }
+
+    public List<AdminPokemonGrantResponse> getAdminGrantHistory() {
+        Set<String> drawTransactionIds = new java.util.HashSet<>(ballTransactionRepository.findDrawSourceIds(
+                BallTransactionType.DRAW, List.of("DRAW", "SHINY_DRAW")));
+        return collectionDrawRepository.findAllForAdminHistory().stream()
+                .filter(draw -> draw.getGrantedBy() != null || !drawTransactionIds.contains(draw.getId().toString()))
+                .map(draw -> new AdminPokemonGrantResponse(draw,
+                        draw.getGrantedBy() == null && !drawTransactionIds.contains(draw.getId().toString())))
+                .limit(100)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public AdminBallGrantResponse grantBalls(Member admin, AdminBallGrantRequest request) {
+        if (request == null || request.getLoginID() == null || request.getLoginID().isBlank()
+                || request.getBallType() == null || request.getAmount() == null || request.getAmount() <= 0) {
+            throw new ConflictException("회원, 포켓볼 종류와 양수를 입력해 주세요.");
+        }
+        if (request.getBallType() != BallType.NORMAL && request.getBallType() != BallType.MASTER) {
+            throw new ConflictException("지급할 수 없는 포켓볼 종류입니다.");
+        }
+        Member recipient = memberRepository.findByLoginID(request.getLoginID())
+                .orElseThrow(() -> new NoSuchElementException("회원을 찾을 수 없습니다."));
+        BallTransaction transaction = ballTransactionRepository.save(new BallTransaction(
+                recipient,
+                request.getAmount(),
+                BallTransactionType.ADMIN_GRANT,
+                request.getBallType(),
+                "ADMIN_BALL_GRANT",
+                java.util.UUID.randomUUID().toString(),
+                admin));
+        return new AdminBallGrantResponse(transaction);
+    }
+
+    public List<AdminBallGrantResponse> getAdminBallGrantHistory() {
+        return ballTransactionRepository.findAdminBallGrants(PageRequest.of(0, 100)).stream()
+                .map(AdminBallGrantResponse::new)
                 .collect(Collectors.toList());
     }
 

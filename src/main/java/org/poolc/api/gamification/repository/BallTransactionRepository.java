@@ -3,9 +3,11 @@ package org.poolc.api.gamification.repository;
 import org.poolc.api.gamification.domain.BallTransaction;
 import org.poolc.api.gamification.domain.BallTransactionType;
 import org.poolc.api.gamification.domain.BallType;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import java.util.List;
 
 public interface BallTransactionRepository extends JpaRepository<BallTransaction, Long> {
     @Query("select coalesce(sum(t.amount), 0) from BallTransaction t where t.member.UUID = :memberUuid")
@@ -21,4 +23,11 @@ public interface BallTransactionRepository extends JpaRepository<BallTransaction
             @Param("type") BallTransactionType type,
             @Param("sourceType") String sourceType,
             @Param("sourceId") String sourceId);
+
+    @Query("select t.sourceId from BallTransaction t where t.type = :type and t.sourceType in :sourceTypes")
+    List<String> findDrawSourceIds(@Param("type") BallTransactionType type, @Param("sourceTypes") List<String> sourceTypes);
+
+    @Query("select t from BallTransaction t join fetch t.member left join fetch t.grantedBy "
+            + "where t.sourceType = 'ADMIN_BALL_GRANT' order by t.createdAt desc")
+    List<BallTransaction> findAdminBallGrants(Pageable pageable);
 }

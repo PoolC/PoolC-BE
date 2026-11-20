@@ -19,6 +19,10 @@ public class BallTransaction {
     @JoinColumn(name = "member_uuid", nullable = false, referencedColumnName = "UUID")
     private Member member;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "granted_by_uuid", referencedColumnName = "UUID")
+    private Member grantedBy;
+
     @Column(nullable = false)
     private int amount;
 
@@ -43,7 +47,12 @@ public class BallTransaction {
     }
 
     public BallTransaction(Member member, int amount, BallTransactionType type, BallType ballType, String sourceType, String sourceId) {
+        this(member, amount, type, ballType, sourceType, sourceId, null);
+    }
+
+    public BallTransaction(Member member, int amount, BallTransactionType type, BallType ballType, String sourceType, String sourceId, Member grantedBy) {
         this.member = member;
+        this.grantedBy = grantedBy;
         this.amount = amount;
         this.type = type;
         this.ballType = ballType;
