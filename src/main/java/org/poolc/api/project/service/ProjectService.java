@@ -19,12 +19,14 @@ public class ProjectService {
 
     private final ProjectRepository projectRepository;
     private final MemberService memberService;
+    private final GameBuildUploadService gameBuildUploadService;
 
     @Transactional
     public void createProject(ProjectCreateValues values) {
+        validateGameUrl(values.getGameURL());
         checkMembersExist(values.getMemberLoginIDs());
 
-        Project project = new Project(values.getName(), values.getDescription(), values.getGenre(), values.getCategory(), values.getStartDate(), values.getEndDate(), values.getThumbnailURL(), values.getBody());
+        Project project = new Project(values.getName(), values.getDescription(), values.getGenre(), values.getCategory(), values.getStartDate(), values.getEndDate(), values.getThumbnailURL(), values.getBody(), values.getGameURL());
         project.setMembers(values.getMemberLoginIDs());
 
         projectRepository.save(project);
@@ -45,6 +47,7 @@ public class ProjectService {
 
     @Transactional
     public void updateProject(ProjectUpdateValues values, Long projectID) {
+        validateGameUrl(values.getGameURL());
         Project project = findOne(projectID);
         checkMembersExist(values.getMemberLoginIDs());
         project.update(values);
@@ -57,5 +60,11 @@ public class ProjectService {
 
     private void checkMembersExist(List<String> memberLoginIDs) {
         memberLoginIDs.forEach(memberService::getMemberByLoginID);
+    }
+
+    private void validateGameUrl(String gameURL) {
+        if (!gameBuildUploadService.isAllowedGameUrl(gameURL)) {
+            throw new IllegalArgumentException("게임 주소는 설정된 게임 도메인의 index.html이어야 합니다.");
+        }
     }
 }

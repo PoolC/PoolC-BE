@@ -51,6 +51,9 @@ public class Project extends TimestampEntity {
     @Column(name = "body", nullable = false, columnDefinition = "text")
     private String body;
 
+    @Column(name = "game_url", columnDefinition = "varchar(2048)")
+    private String gameURL;
+
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "project_members", joinColumns = @JoinColumn(name = "project_id"))
     private List<String> memberLoginIDs = new ArrayList<>();
@@ -59,6 +62,10 @@ public class Project extends TimestampEntity {
     }
 
     public Project(String name, String description, String genre, ProjectCategory category, LocalDate startDate, LocalDate endDate, String thumbnailURL, String body) {
+        this(name, description, genre, category, startDate, endDate, thumbnailURL, body, null);
+    }
+
+    public Project(String name, String description, String genre, ProjectCategory category, LocalDate startDate, LocalDate endDate, String thumbnailURL, String body, String gameURL) {
         this.name = name;
         this.description = description;
         this.genre = genre;
@@ -68,6 +75,7 @@ public class Project extends TimestampEntity {
         this.duration = formatDuration(startDate, endDate);
         this.thumbnailURL = thumbnailURL;
         this.body = body;
+        this.gameURL = gameURL;
     }
 
     public void setMembers(List<String> members) {
@@ -84,6 +92,7 @@ public class Project extends TimestampEntity {
         this.duration = formatDuration(startDate, endDate);
         this.thumbnailURL = projectUpdateValues.getThumbnailURL();
         this.body = projectUpdateValues.getBody();
+        this.gameURL = projectUpdateValues.getGameURL();
         this.memberLoginIDs.clear();
         this.memberLoginIDs.addAll(projectUpdateValues.getMemberLoginIDs());
     }

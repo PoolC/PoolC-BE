@@ -18,6 +18,7 @@ public class ProjectResponse {
     private final Long id;
     private final String name;
     private final String body;
+    private final String gameURL;
     private final String description;
     private final String genre;
     private final ProjectCategory category;
@@ -28,10 +29,11 @@ public class ProjectResponse {
     private final List<MemberResponse> members;
 
     @JsonCreator
-    public ProjectResponse(Long id, String name, String body, String description, String genre, ProjectCategory category, String duration, LocalDate startDate, LocalDate endDate, String thumbnailURL, List<MemberResponse> members) {
+    public ProjectResponse(Long id, String name, String body, String description, String genre, ProjectCategory category, String duration, LocalDate startDate, LocalDate endDate, String thumbnailURL, String gameURL, List<MemberResponse> members) {
         this.id = id;
         this.name = name;
         this.body = body;
+        this.gameURL = gameURL;
         this.description = description;
         this.genre = genre;
         this.category = category;
@@ -48,6 +50,6 @@ public class ProjectResponse {
 
     public static ProjectResponse ofWithMemberResponses(Project project, List<MemberResponse> members) {
         return new ProjectResponse(project.getId(), project.getName(), project.getBody(), project.getDescription(),
-                project.getGenre(), project.getCategory(), project.getDuration(), project.getStartDate(), project.getEndDate(), project.getThumbnailURL(), members);
+                project.getGenre(), project.getCategory(), project.getDuration(), project.getStartDate(), project.getEndDate(), project.getThumbnailURL(), project.getGameURL(), members);
     }
 }
