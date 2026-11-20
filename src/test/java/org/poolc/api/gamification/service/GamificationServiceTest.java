@@ -10,6 +10,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.poolc.api.common.exception.ConflictException;
+import org.poolc.api.auth.exception.UnauthorizedException;
 import org.poolc.api.common.domain.YearSemester;
 import org.poolc.api.gamification.domain.BallTransaction;
 import org.poolc.api.gamification.domain.BallTransactionType;
@@ -23,6 +24,8 @@ import org.poolc.api.gamification.dto.GameSummaryResponse;
 import org.poolc.api.gamification.dto.ShinyDrawStatus;
 import org.poolc.api.gamification.dto.CollectionItemResponse;
 import org.poolc.api.gamification.dto.AchievementResponse;
+import org.poolc.api.gamification.dto.AdminBallGrantRequest;
+import org.poolc.api.gamification.dto.AdminPokemonGrantRequest;
 import org.poolc.api.gamification.repository.AchievementProgressRepository;
 import org.poolc.api.gamification.repository.BallTransactionRepository;
 import org.poolc.api.gamification.repository.CollectionDrawRepository;
@@ -31,6 +34,8 @@ import org.poolc.api.gamification.repository.MemberFeaturedCollectibleRepository
 import org.poolc.api.activity.repository.ActivityRepository;
 import org.poolc.api.activity.repository.SessionRepository;
 import org.poolc.api.member.domain.Member;
+import org.poolc.api.member.domain.MemberRole;
+import org.poolc.api.member.domain.MemberRoles;
 import org.poolc.api.member.dto.MyActivitySummaryResponse;
 import org.poolc.api.member.repository.MemberRepository;
 import org.poolc.api.member.service.MemberService;
@@ -90,6 +95,66 @@ class GamificationServiceTest {
         lenient().when(achievementProgressRepository.findAllByMemberUuidAndAchievementKey("member-uuid", "DAILY_ATTENDANCE"))
                 .thenReturn(Collections.emptyList());
         lenient().when(achievementProgressRepository.findAllByMemberUuid("member-uuid")).thenReturn(Collections.emptyList());
+    }
+
+    @Test
+    void adminWithoutTechnicianRoleCannotGrantPokemonOrBalls() {
+        when(member.getRoles()).thenReturn(MemberRoles.getDefaultFor(MemberRole.ADMIN));
+
+        assertThatThrownBy(() -> service.grantPokemon(member, pokemonGrantRequest("other-member")))
+                .isInstanceOf(UnauthorizedException.class);
+        assertThatThrownBy(() -> service.grantBalls(member, ballGrantRequest("other-member")))
+                .isInstanceOf(UnauthorizedException.class);
+        verify(collectionDrawRepository, never()).save(any(CollectionDraw.class));
+        verify(ballTransactionRepository, never()).save(any(BallTransaction.class));
+    }
+
+    @Test
+    void technicianCannotGrantPokemonOrBallsToSelf() {
+        when(member.getRoles()).thenReturn(MemberRoles.getDefaultFor(MemberRole.TECHNICIAN));
+        when(memberRepository.findByLoginID("member-login-id")).thenReturn(Optional.of(member));
+
+        assertThatThrownBy(() -> service.grantPokemon(member, pokemonGrantRequest("member-login-id")))
+                .isInstanceOf(ConflictException.class)
+                .hasMessageContaining("자기 자신");
+        assertThatThrownBy(() -> service.grantBalls(member, ballGrantRequest("member-login-id")))
+                .isInstanceOf(ConflictException.class)
+                .hasMessageContaining("자기 자신");
+        verify(collectionDrawRepository, never()).save(any(CollectionDraw.class));
+        verify(ballTransactionRepository, never()).save(any(BallTransaction.class));
+    }
+
+    @Test
+    void technicianCanGrantBallsToAnotherMember() {
+        Member recipient = org.mockito.Mockito.mock(Member.class);
+        when(member.getRoles()).thenReturn(MemberRoles.getDefaultFor(MemberRole.TECHNICIAN));
+        when(recipient.getUUID()).thenReturn("other-uuid");
+        when(memberRepository.findByLoginID("other-member")).thenReturn(Optional.of(recipient));
+        when(ballTransactionRepository.save(any(BallTransaction.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        service.grantBalls(member, ballGrantRequest("other-member"));
+
+        ArgumentCaptor<BallTransaction> captor = ArgumentCaptor.forClass(BallTransaction.class);
+        verify(ballTransactionRepository).save(captor.capture());
+        assertThat(captor.getValue().getGrantedBy()).isSameAs(member);
+        assertThat(captor.getValue().getMember()).isSameAs(recipient);
+        assertThat(captor.getValue().getAmount()).isEqualTo(1);
+    }
+
+    private AdminPokemonGrantRequest pokemonGrantRequest(String loginId) {
+        AdminPokemonGrantRequest request = new AdminPokemonGrantRequest();
+        request.setLoginID(loginId);
+        request.setCollectibleId(1L);
+        return request;
+    }
+
+    private AdminBallGrantRequest ballGrantRequest(String loginId) {
+        AdminBallGrantRequest request = new AdminBallGrantRequest();
+        request.setLoginID(loginId);
+        request.setBallType(BallType.NORMAL);
+        request.setAmount(1);
+        return request;
     }
 
     @Test
