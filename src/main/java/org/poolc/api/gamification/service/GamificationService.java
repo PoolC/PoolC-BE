@@ -58,6 +58,9 @@ import javax.servlet.http.HttpServletRequest;
 @Transactional(readOnly = true)
 public class GamificationService {
     private static final String ACTIVITY_HOURS = "ACTIVITY_HOURS";
+    private static final List<String> ADMIN_BALL_GRANT_SOURCES = List.of(
+            "ADMIN_BALL_GRANT", "BULK_GRANT", "MANUAL_GRANT", "ADMIN_MANUAL_GRANT",
+            "POOLC_ADMIN_GRANT", "MANUAL_ADMIN", "ADMIN_GRANT", "ADMIN_MANUAL", "PROD_MANUAL_GRANT");
     private static final SecureRandom RANDOM = new SecureRandom();
 
     private final BallTransactionRepository ballTransactionRepository;
@@ -476,7 +479,7 @@ public class GamificationService {
     }
 
     public List<AdminBallGrantResponse> getAdminBallGrantHistory() {
-        return ballTransactionRepository.findAdminBallGrants(PageRequest.of(0, 100)).stream()
+        return ballTransactionRepository.findAdminBallGrants(BallTransactionType.ADMIN_GRANT, ADMIN_BALL_GRANT_SOURCES).stream()
                 .map(AdminBallGrantResponse::new)
                 .collect(Collectors.toList());
     }

@@ -14,6 +14,7 @@ public class AdminBallGrantResponse {
     private final BallType ballType;
     private final int amount;
     private final String grantorName;
+    private final String grantSource;
     private final OffsetDateTime grantedAt;
 
     public AdminBallGrantResponse(BallTransaction transaction) {
@@ -22,7 +23,9 @@ public class AdminBallGrantResponse {
         this.memberName = transaction.getMember().getName();
         this.ballType = transaction.getBallType();
         this.amount = transaction.getAmount();
-        this.grantorName = transaction.getGrantedBy() == null ? null : transaction.getGrantedBy().getName();
+        boolean legacySql = transaction.getGrantedBy() == null;
+        this.grantorName = legacySql ? "김민조" : transaction.getGrantedBy().getName();
+        this.grantSource = legacySql ? "LEGACY_SQL" : "ADMIN";
         this.grantedAt = transaction.getCreatedAt().atZone(ZoneId.of("Asia/Seoul")).toOffsetDateTime();
     }
 }

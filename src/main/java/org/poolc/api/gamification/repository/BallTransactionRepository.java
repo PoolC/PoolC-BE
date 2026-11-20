@@ -3,7 +3,6 @@ package org.poolc.api.gamification.repository;
 import org.poolc.api.gamification.domain.BallTransaction;
 import org.poolc.api.gamification.domain.BallTransactionType;
 import org.poolc.api.gamification.domain.BallType;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -28,6 +27,8 @@ public interface BallTransactionRepository extends JpaRepository<BallTransaction
     List<String> findDrawSourceIds(@Param("type") BallTransactionType type, @Param("sourceTypes") List<String> sourceTypes);
 
     @Query("select t from BallTransaction t join fetch t.member left join fetch t.grantedBy "
-            + "where t.sourceType = 'ADMIN_BALL_GRANT' order by t.createdAt desc")
-    List<BallTransaction> findAdminBallGrants(Pageable pageable);
+            + "where t.type = :type and t.amount > 0 and t.sourceType in :sourceTypes "
+            + "order by t.createdAt desc, t.id desc")
+    List<BallTransaction> findAdminBallGrants(
+            @Param("type") BallTransactionType type, @Param("sourceTypes") List<String> sourceTypes);
 }
