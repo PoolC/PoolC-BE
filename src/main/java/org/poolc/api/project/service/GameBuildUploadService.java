@@ -5,7 +5,14 @@ import org.poolc.api.project.dto.GameBuildUploadResponse;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.Delete;
+import software.amazon.awssdk.services.s3.model.DeleteObjectsRequest;
+import software.amazon.awssdk.services.s3.model.ObjectIdentifier;
+import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
+import software.amazon.awssdk.services.s3.model.ListObjectsV2Response;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.DeleteObjectsResponse;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
 
@@ -28,15 +35,18 @@ public class GameBuildUploadService {
     private static final long MAX_BUILD_SIZE = 300L * 1024 * 1024;
 
     private final ObjectProvider<S3Presigner> presignerProvider;
+    private final ObjectProvider<S3Client> s3ClientProvider;
     private final String bucket;
     private final String publicBaseUrl;
     private final boolean enabled;
 
     public GameBuildUploadService(ObjectProvider<S3Presigner> presignerProvider,
+                                  ObjectProvider<S3Client> s3ClientProvider,
                                   @Value("${game-build.s3.bucket:}") String bucket,
                                   @Value("${game-build.public-base-url:}") String publicBaseUrl,
                                   @Value("${game-build.enabled:false}") boolean enabled) {
         this.presignerProvider = presignerProvider;
+        this.s3ClientProvider = s3ClientProvider;
         this.bucket = bucket;
         this.publicBaseUrl = publicBaseUrl;
         this.enabled = enabled;
@@ -74,6 +84,58 @@ public class GameBuildUploadService {
         } catch (URISyntaxException error) {
             return false;
         }
+    }
+
+    public void deleteGameBuildFromUrl(String gameURL) {
+        if (gameURL == null || gameURL.isBlank()) return;
+        if (!isAllowedGameUrl(gameURL)) {
+            throw new IllegalArgumentException("게임 주소가 설정된 게임 도메인과 일치하지 않습니다.");
+        }
+        try {
+            URI base = new URI(publicBaseUrl);
+            URI candidate = new URI(gameURL);
+            String basePath = base.getPath() == null ? "" : base.getPath().replaceAll("/+$", "");
+            String keyPath = candidate.getPath().substring((basePath + "/games/").length());
+            String releaseId = keyPath.substring(0, keyPath.indexOf('/'));
+            deleteGameBuildByReleaseId(releaseId);
+        } catch (URISyntaxException | IndexOutOfBoundsException error) {
+            throw new IllegalArgumentException("게임 주소에서 빌드 ID를 읽을 수 없습니다.", error);
+        }
+    }
+
+    public void deleteGameBuildByReleaseId(String releaseId) {
+        if (!isConfigured()) throw new IllegalStateException("게임 빌드 저장소가 설정되지 않았습니다.");
+        UUID parsedReleaseId;
+        try {
+            parsedReleaseId = UUID.fromString(releaseId);
+        } catch (IllegalArgumentException error) {
+            throw new IllegalArgumentException("게임 빌드 ID가 올바르지 않습니다.", error);
+        }
+
+        S3Client s3Client = s3ClientProvider.getIfAvailable();
+        if (s3Client == null) throw new IllegalStateException("게임 빌드 저장소 클라이언트가 설정되지 않았습니다.");
+        String prefix = "games/" + parsedReleaseId + "/";
+        String continuationToken = null;
+        do {
+            ListObjectsV2Request.Builder listRequest = ListObjectsV2Request.builder()
+                    .bucket(bucket)
+                    .prefix(prefix)
+                    .maxKeys(1000);
+            if (continuationToken != null) listRequest.continuationToken(continuationToken);
+            ListObjectsV2Response page = s3Client.listObjectsV2(listRequest.build());
+            if (!page.contents().isEmpty()) {
+                List<ObjectIdentifier> objects = new ArrayList<>();
+                page.contents().forEach(object -> objects.add(ObjectIdentifier.builder().key(object.key()).build()));
+                DeleteObjectsResponse deletion = s3Client.deleteObjects(DeleteObjectsRequest.builder()
+                        .bucket(bucket)
+                        .delete(Delete.builder().objects(objects).quiet(true).build())
+                        .build());
+                if (!deletion.errors().isEmpty()) {
+                    throw new IllegalStateException("일부 게임 파일을 삭제하지 못했습니다: " + deletion.errors().get(0).key());
+                }
+            }
+            continuationToken = page.isTruncated() ? page.nextContinuationToken() : null;
+        } while (continuationToken != null);
     }
 
     public GameBuildUploadResponse createUploadTargets(GameBuildUploadRequest request) {

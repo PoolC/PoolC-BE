@@ -23,14 +23,19 @@ public class RegisterProjectRequest {
     private final String thumbnailURL;
     private final String body;
     private final String gameURL;
+    private final String downloadURL;
     List<String> memberLoginIDs;
 
     public RegisterProjectRequest(String name, String description, String genre, ProjectCategory category, LocalDate startDate, LocalDate endDate, String thumbnailURL, String body, List<String> memberLoginIDs) {
-        this(name, description, genre, category, startDate, endDate, thumbnailURL, body, null, memberLoginIDs);
+        this(name, description, genre, category, startDate, endDate, thumbnailURL, body, null, null, memberLoginIDs);
+    }
+
+    public RegisterProjectRequest(String name, String description, String genre, ProjectCategory category, LocalDate startDate, LocalDate endDate, String thumbnailURL, String body, String gameURL, List<String> memberLoginIDs) {
+        this(name, description, genre, category, startDate, endDate, thumbnailURL, body, gameURL, null, memberLoginIDs);
     }
 
     @JsonCreator
-    public RegisterProjectRequest(String name, String description, String genre, ProjectCategory category, LocalDate startDate, LocalDate endDate, String thumbnailURL, String body, String gameURL, List<String> memberLoginIDs) {
+    public RegisterProjectRequest(String name, String description, String genre, ProjectCategory category, LocalDate startDate, LocalDate endDate, String thumbnailURL, String body, String gameURL, String downloadURL, List<String> memberLoginIDs) {
         this.name = name;
         this.description = description;
         this.genre = genre;
@@ -40,6 +45,7 @@ public class RegisterProjectRequest {
         this.thumbnailURL = thumbnailURL;
         this.body = body;
         this.gameURL = gameURL;
+        this.downloadURL = downloadURL;
         this.memberLoginIDs = memberLoginIDs;
     }
 

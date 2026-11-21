@@ -54,6 +54,9 @@ public class Project extends TimestampEntity {
     @Column(name = "game_url", columnDefinition = "varchar(2048)")
     private String gameURL;
 
+    @Column(name = "download_url", columnDefinition = "varchar(2048)")
+    private String downloadURL;
+
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "project_members", joinColumns = @JoinColumn(name = "project_id"))
     private List<String> memberLoginIDs = new ArrayList<>();
@@ -62,10 +65,14 @@ public class Project extends TimestampEntity {
     }
 
     public Project(String name, String description, String genre, ProjectCategory category, LocalDate startDate, LocalDate endDate, String thumbnailURL, String body) {
-        this(name, description, genre, category, startDate, endDate, thumbnailURL, body, null);
+        this(name, description, genre, category, startDate, endDate, thumbnailURL, body, null, null);
     }
 
     public Project(String name, String description, String genre, ProjectCategory category, LocalDate startDate, LocalDate endDate, String thumbnailURL, String body, String gameURL) {
+        this(name, description, genre, category, startDate, endDate, thumbnailURL, body, gameURL, null);
+    }
+
+    public Project(String name, String description, String genre, ProjectCategory category, LocalDate startDate, LocalDate endDate, String thumbnailURL, String body, String gameURL, String downloadURL) {
         this.name = name;
         this.description = description;
         this.genre = genre;
@@ -76,10 +83,15 @@ public class Project extends TimestampEntity {
         this.thumbnailURL = thumbnailURL;
         this.body = body;
         this.gameURL = gameURL;
+        this.downloadURL = downloadURL;
     }
 
     public void setMembers(List<String> members) {
         this.memberLoginIDs = members;
+    }
+
+    public void clearGameURL() {
+        this.gameURL = null;
     }
 
     public void update(ProjectUpdateValues projectUpdateValues) {
@@ -93,6 +105,7 @@ public class Project extends TimestampEntity {
         this.thumbnailURL = projectUpdateValues.getThumbnailURL();
         this.body = projectUpdateValues.getBody();
         this.gameURL = projectUpdateValues.getGameURL();
+        this.downloadURL = projectUpdateValues.getDownloadURL();
         this.memberLoginIDs.clear();
         this.memberLoginIDs.addAll(projectUpdateValues.getMemberLoginIDs());
     }

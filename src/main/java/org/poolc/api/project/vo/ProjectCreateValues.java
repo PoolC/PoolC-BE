@@ -19,6 +19,7 @@ public class ProjectCreateValues {
     private final String thumbnailURL;
     private final String body;
     private final String gameURL;
+    private final String downloadURL;
     List<String> memberLoginIDs;
 
     public ProjectCreateValues(RegisterProjectRequest request) {
@@ -31,6 +32,7 @@ public class ProjectCreateValues {
         this.thumbnailURL = request.getThumbnailURL();
         this.body = request.getBody();
         this.gameURL = request.getGameURL();
+        this.downloadURL = request.getDownloadURL();
         this.memberLoginIDs = request.getMemberLoginIDs();
     }
 }

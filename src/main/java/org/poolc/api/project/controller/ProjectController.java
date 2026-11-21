@@ -68,4 +68,10 @@ public class ProjectController {
         projectService.deleteProject(projectID);
         return ResponseEntity.ok().build();
     }
+
+    @DeleteMapping(value = "/{projectID}/game-build", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Void> unlinkProjectGameBuild(@PathVariable Long projectID) {
+        projectService.unlinkGameBuild(projectID);
+        return ResponseEntity.noContent().build();
+    }
 }
