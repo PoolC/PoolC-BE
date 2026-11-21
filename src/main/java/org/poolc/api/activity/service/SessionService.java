@@ -16,6 +16,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.*;
 
 @Service
@@ -36,6 +38,7 @@ public class SessionService {
         if (!checkUserIsHost(activity.getHost().getUUID(), member.getUUID())) {
             throw new NotHostException("호스트가 아닌 사람은 세션 정보를 입력할수 없습니다");
         }
+        validateSessionValues(sessionCreateValues.getDate(), sessionCreateValues.getHour());
         Session session = new Session(activity, sessionCreateValues);
         sessionRepository.save(session);
         return session;
@@ -59,7 +62,18 @@ public class SessionService {
         if (!checkUserIsHost(session.getActivity().getHost().getUUID(), values.getUuid())) {
             throw new NotHostException("호스트가 아닌 사람은 세션 정보를 업데이트 할수 없습니다");
         }
+        validateSessionValues(values.getDate(), values.getHour());
         session.update(values);
+    }
+
+    private void validateSessionValues(LocalDate date, Long hour) {
+        LocalDate today = LocalDate.now(ZoneId.of("Asia/Seoul"));
+        if (date == null || date.isAfter(today)) {
+            throw new IllegalArgumentException("회차 날짜는 오늘 이후로 설정할 수 없습니다.");
+        }
+        if (hour == null || hour < 1) {
+            throw new IllegalArgumentException("진행 시간은 1시간 이상이어야 합니다.");
+        }
     }
 
     @Transactional
