@@ -35,6 +35,7 @@ public class ActivityService {
     @Transactional
     public void createActivity(ActivityCreateValues values, Member member) {
         validateCapacity(values.getCapacity());
+        validateHour(values.getHour());
         Activity activity = new Activity(member, values);
         activity.getTags().addAll(values.getTags().stream().map(t -> new ActivityTag(activity, t)).collect(Collectors.toList()));
         activityRepository.save(activity);
@@ -52,6 +53,7 @@ public class ActivityService {
     @Transactional
     public void updateActivity(Member member, Long id, ActivityUpdateValues values) {
         validateCapacity(values.getCapacity());
+        validateHour(values.getHour());
         Activity activity = activityRepository.findOneActivityWithHostAndTags(id).orElseThrow(() -> new NoSuchElementException("해당하는 활동이 존재하지 않습니다"));
         if (!checkWhetherAdminOrHost(member.isAdmin(), member.getUUID(), activity.getHost().getUUID())) {
             throw new NotAdminOrHostException("호스트나 관리자가 아닙니다");
@@ -62,6 +64,12 @@ public class ActivityService {
     private void validateCapacity(Long capacity) {
         if (capacity == null || capacity < 1) {
             throw new IllegalArgumentException("정원은 1명 이상이어야 합니다.");
+        }
+    }
+
+    private void validateHour(Long hour) {
+        if (hour == null || hour < 1) {
+            throw new IllegalArgumentException("회차 시간은 1시간 이상이어야 합니다.");
         }
     }
 

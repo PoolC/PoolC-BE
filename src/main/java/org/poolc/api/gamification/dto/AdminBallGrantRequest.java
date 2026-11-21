@@ -12,4 +12,5 @@ public class AdminBallGrantRequest {
     private String loginID;
     private BallType ballType;
     private Integer amount;
+    private String reason;
 }

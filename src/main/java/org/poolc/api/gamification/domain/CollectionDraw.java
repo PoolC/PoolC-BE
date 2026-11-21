@@ -31,6 +31,9 @@ public class CollectionDraw {
     @JoinColumn(name = "granted_by_uuid", referencedColumnName = "UUID")
     private Member grantedBy;
 
+    @Column(name = "grant_reason", length = 500)
+    private String grantReason;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "rarity_at_draw", nullable = false, length = 20)
     private CollectibleRarity rarityAtDraw;
@@ -49,9 +52,14 @@ public class CollectionDraw {
     }
 
     public CollectionDraw(Member member, CollectibleCatalog collectible, boolean shiny, Member grantedBy) {
+        this(member, collectible, shiny, grantedBy, null);
+    }
+
+    public CollectionDraw(Member member, CollectibleCatalog collectible, boolean shiny, Member grantedBy, String grantReason) {
         this.member = member;
         this.collectible = collectible;
         this.grantedBy = grantedBy;
+        this.grantReason = grantReason;
         this.rarityAtDraw = collectible.getRarity();
         this.shiny = shiny;
         this.drawnAt = LocalDateTime.now();

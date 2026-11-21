@@ -23,6 +23,9 @@ public class BallTransaction {
     @JoinColumn(name = "granted_by_uuid", referencedColumnName = "UUID")
     private Member grantedBy;
 
+    @Column(name = "grant_reason", length = 500)
+    private String grantReason;
+
     @Column(nullable = false)
     private int amount;
 
@@ -51,8 +54,13 @@ public class BallTransaction {
     }
 
     public BallTransaction(Member member, int amount, BallTransactionType type, BallType ballType, String sourceType, String sourceId, Member grantedBy) {
+        this(member, amount, type, ballType, sourceType, sourceId, grantedBy, null);
+    }
+
+    public BallTransaction(Member member, int amount, BallTransactionType type, BallType ballType, String sourceType, String sourceId, Member grantedBy, String grantReason) {
         this.member = member;
         this.grantedBy = grantedBy;
+        this.grantReason = grantReason;
         this.amount = amount;
         this.type = type;
         this.ballType = ballType;

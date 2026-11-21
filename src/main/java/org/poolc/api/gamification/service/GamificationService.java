@@ -436,6 +436,7 @@ public class GamificationService {
         if (request == null || request.getLoginID() == null || request.getLoginID().isBlank() || request.getCollectibleId() == null) {
             throw new ConflictException("지급할 회원과 포켓몬을 선택해 주세요.");
         }
+        String grantReason = validateGrantReason(request.getReason());
         Member recipient = memberRepository.findByLoginID(request.getLoginID())
                 .orElseThrow(() -> new NoSuchElementException("회원을 찾을 수 없습니다."));
         requireOtherMember(admin, recipient);
@@ -447,7 +448,7 @@ public class GamificationService {
             throw new ConflictException("이미 보유한 포켓몬입니다.");
         }
         CollectionDraw grant = collectionDrawRepository.save(
-                new CollectionDraw(recipient, collectible, request.isShiny(), admin));
+                new CollectionDraw(recipient, collectible, request.isShiny(), admin, grantReason));
         return new AdminPokemonGrantResponse(grant, false);
     }
 
@@ -469,6 +470,7 @@ public class GamificationService {
                 || request.getBallType() == null || request.getAmount() == null || request.getAmount() <= 0) {
             throw new ConflictException("회원, 포켓볼 종류와 양수를 입력해 주세요.");
         }
+        String grantReason = validateGrantReason(request.getReason());
         if (request.getBallType() != BallType.NORMAL && request.getBallType() != BallType.MASTER) {
             throw new ConflictException("지급할 수 없는 포켓볼 종류입니다.");
         }
@@ -482,7 +484,8 @@ public class GamificationService {
                 request.getBallType(),
                 "ADMIN_BALL_GRANT",
                 java.util.UUID.randomUUID().toString(),
-                admin));
+                admin,
+                grantReason));
         return new AdminBallGrantResponse(transaction);
     }
 
@@ -500,6 +503,17 @@ public class GamificationService {
         if (member == null || !member.getRoles().hasRole(MemberRole.TECHNICIAN)) {
             throw new UnauthorizedException("기여자 권한이 필요합니다.");
         }
+    }
+
+    private String validateGrantReason(String reason) {
+        if (reason == null || reason.trim().isEmpty()) {
+            throw new ConflictException("지급 사유를 입력해 주세요.");
+        }
+        String normalizedReason = reason.trim();
+        if (normalizedReason.length() > 500) {
+            throw new ConflictException("지급 사유는 500자 이하로 입력해 주세요.");
+        }
+        return normalizedReason;
     }
 
     private void requireOtherMember(Member giver, Member recipient) {
