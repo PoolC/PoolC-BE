@@ -140,12 +140,14 @@ class GamificationServiceTest {
         assertThat(captor.getValue().getGrantedBy()).isSameAs(member);
         assertThat(captor.getValue().getMember()).isSameAs(recipient);
         assertThat(captor.getValue().getAmount()).isEqualTo(1);
+        assertThat(captor.getValue().getGrantReason()).isEqualTo("개발 기여 보상");
     }
 
     private AdminPokemonGrantRequest pokemonGrantRequest(String loginId) {
         AdminPokemonGrantRequest request = new AdminPokemonGrantRequest();
         request.setLoginID(loginId);
         request.setCollectibleId(1L);
+        request.setReason("개발 기여 보상");
         return request;
     }
 
@@ -154,6 +156,7 @@ class GamificationServiceTest {
         request.setLoginID(loginId);
         request.setBallType(BallType.NORMAL);
         request.setAmount(1);
+        request.setReason("개발 기여 보상");
         return request;
     }
 
