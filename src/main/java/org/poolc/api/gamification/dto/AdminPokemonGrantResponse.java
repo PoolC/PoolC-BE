@@ -17,6 +17,7 @@ public class AdminPokemonGrantResponse {
     private final String rarity;
     private final String grantorName;
     private final String grantSource;
+    private final String reason;
     private final OffsetDateTime grantedAt;
 
     public AdminPokemonGrantResponse(CollectionDraw draw, boolean legacySql) {
@@ -32,6 +33,7 @@ public class AdminPokemonGrantResponse {
         this.rarity = draw.getRarityAtDraw().name();
         this.grantorName = draw.getGrantedBy() != null ? draw.getGrantedBy().getName() : (legacySql ? "김민조" : "뽑기");
         this.grantSource = draw.getGrantedBy() != null ? "ADMIN" : (legacySql ? "LEGACY_SQL" : "DRAW");
+        this.reason = draw.getGrantReason();
         this.grantedAt = draw.getDrawnAt().atZone(ZoneId.of("Asia/Seoul")).toOffsetDateTime();
     }
 }

@@ -11,4 +11,5 @@ public class AdminPokemonGrantRequest {
     private String loginID;
     private Long collectibleId;
     private boolean shiny;
+    private String reason;
 }
