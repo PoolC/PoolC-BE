@@ -52,12 +52,25 @@ public class ProjectService {
         validateDownloadUrl(values.getDownloadURL());
         Project project = findOne(projectID);
         checkMembersExist(values.getMemberLoginIDs());
+        String previousGameURL = project.getGameURL();
         project.update(values);
+        if (previousGameURL != null && !previousGameURL.equals(values.getGameURL())) {
+            gameBuildUploadService.deleteGameBuildFromUrl(previousGameURL);
+        }
     }
 
     @Transactional
     public void deleteProject(Long projectId) {
-        projectRepository.delete(findOne(projectId));
+        Project project = findOne(projectId);
+        gameBuildUploadService.deleteGameBuildFromUrl(project.getGameURL());
+        projectRepository.delete(project);
+    }
+
+    @Transactional
+    public void unlinkGameBuild(Long projectId) {
+        Project project = findOne(projectId);
+        gameBuildUploadService.deleteGameBuildFromUrl(project.getGameURL());
+        project.clearGameURL();
     }
 
     private void checkMembersExist(List<String> memberLoginIDs) {

@@ -71,6 +71,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers(HttpMethod.POST, "/project").hasAuthority(MemberRole.ADMIN.name())
                 .antMatchers(HttpMethod.PUT, "/project/*").hasAuthority(MemberRole.ADMIN.name())
                 .antMatchers(HttpMethod.DELETE, "/project/*").hasAuthority(MemberRole.ADMIN.name())
+                .antMatchers(HttpMethod.DELETE, "/project/*/game-build").hasAuthority(MemberRole.ADMIN.name())
                 .antMatchers("/project/game-build/**").hasAuthority(MemberRole.ADMIN.name())
                 .antMatchers("/project/**").permitAll()
                 .antMatchers("/swagger-ui/*").permitAll()

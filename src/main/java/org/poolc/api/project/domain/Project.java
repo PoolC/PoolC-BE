@@ -90,6 +90,10 @@ public class Project extends TimestampEntity {
         this.memberLoginIDs = members;
     }
 
+    public void clearGameURL() {
+        this.gameURL = null;
+    }
+
     public void update(ProjectUpdateValues projectUpdateValues) {
         this.name = projectUpdateValues.getName();
         this.description = projectUpdateValues.getDescription();

@@ -11,10 +11,17 @@
       ]
     },
     {
-      "Sid": "UploadProjectGameBuilds",
+      "Sid": "ManageProjectGameBuilds",
       "Effect": "Allow",
-      "Action": "s3:PutObject",
+      "Action": ["s3:PutObject", "s3:DeleteObject"],
       "Resource": "arn:aws:s3:::poolc-game-builds-s3/games/*"
+    },
+    {
+      "Sid": "ListProjectGameBuilds",
+      "Effect": "Allow",
+      "Action": "s3:ListBucket",
+      "Resource": "arn:aws:s3:::poolc-game-builds-s3",
+      "Condition": {"StringLike": {"s3:prefix": ["games/*"]}}
     },
     {
       "Sid": "ListApplicationFiles",

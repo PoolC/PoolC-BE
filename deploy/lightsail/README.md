@@ -38,9 +38,10 @@ uploads (the feature stays disabled until all three values are set):
 - `GAME_BUILD_PUBLIC_BASE_URL`: `https://games.poolc.org`.
 
 The backend signs production uploads as the `poolc-lightsail-runtime` IAM user.
-That user needs `s3:PutObject` on
-`arn:aws:s3:::<game-build-bucket>/games/*`; the policy in
-`deploy/iam/poolc-lightsail-runtime-least-privilege.json` contains that scoped
-permission. The S3 CORS rules in the stack allow the production and local admin
+That user needs `s3:PutObject` and `s3:DeleteObject` on
+`arn:aws:s3:::<game-build-bucket>/games/*`, plus `s3:ListBucket` on the bucket
+restricted to the `games/*` prefix. The policy in
+`deploy/iam/poolc-lightsail-runtime-least-privilege.json` contains those scoped
+permissions. The S3 CORS rules in the stack allow the production and local admin
 pages to upload directly. CloudFront reads the private bucket through Origin
 Access Control.
