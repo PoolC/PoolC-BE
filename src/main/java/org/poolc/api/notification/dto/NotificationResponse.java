@@ -16,6 +16,12 @@ public class NotificationResponse {
     private NotificationType notificationType;
     private LocalDateTime createdAt;
     private Long causedById;
+    private String rewardName;
+    private String rewardImageUrl;
+    private String rewardBallType;
+    private Integer rewardAmount;
+    private Boolean rewardShiny;
+    private String rewardReason;
 
     public static NotificationResponse of(Notification notification) {
         NotificationResponse response = new NotificationResponse();
@@ -27,6 +33,13 @@ public class NotificationResponse {
         if (notification.getNotificationType() != NotificationType.BADGE) {
             response.setCausedById(notification.getCausedById());
         }
+
+        response.setRewardName(notification.getRewardName());
+        response.setRewardImageUrl(notification.getRewardImageUrl());
+        response.setRewardBallType(notification.getRewardBallType());
+        response.setRewardAmount(notification.getRewardAmount());
+        response.setRewardShiny(notification.getRewardShiny());
+        response.setRewardReason(notification.getRewardReason());
 
         return response;
     }

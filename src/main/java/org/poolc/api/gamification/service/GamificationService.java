@@ -37,6 +37,7 @@ import org.poolc.api.member.repository.MemberRepository;
 import org.poolc.api.member.service.MemberService;
 import org.poolc.api.scrap.repository.ScrapRepository;
 import org.poolc.api.project.repository.ProjectRepository;
+import org.poolc.api.notification.service.NotificationService;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -78,6 +79,7 @@ public class GamificationService {
     private final ScrapRepository scrapRepository;
     private final ProjectRepository projectRepository;
     private final MemberFeaturedCollectibleRepository featuredCollectibleRepository;
+    private final NotificationService notificationService;
 
     @Value("${gamification.club-wifi.allowed-ips:127.0.0.1}")
     private String clubWifiAllowedIps;
@@ -449,6 +451,7 @@ public class GamificationService {
         }
         CollectionDraw grant = collectionDrawRepository.save(
                 new CollectionDraw(recipient, collectible, request.isShiny(), admin, grantReason));
+        notificationService.createPokemonRewardNotification(admin, recipient, grant);
         return new AdminPokemonGrantResponse(grant, false);
     }
 
@@ -486,6 +489,7 @@ public class GamificationService {
                 java.util.UUID.randomUUID().toString(),
                 admin,
                 grantReason));
+        notificationService.createBallRewardNotification(admin, recipient, transaction);
         return new AdminBallGrantResponse(transaction);
     }
 

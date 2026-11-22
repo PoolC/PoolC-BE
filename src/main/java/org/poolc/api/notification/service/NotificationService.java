@@ -6,6 +6,9 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.poolc.api.member.domain.Member;
 import org.poolc.api.member.repository.MemberRepository;
+import org.poolc.api.gamification.domain.BallTransaction;
+import org.poolc.api.gamification.domain.BallType;
+import org.poolc.api.gamification.domain.CollectionDraw;
 import org.poolc.api.notification.domain.Notification;
 import org.poolc.api.notification.domain.NotificationType;
 import org.poolc.api.notification.repository.NotificationRepository;
@@ -56,6 +59,44 @@ public class NotificationService {
         Notification notification = new Notification(receiver.getLoginID(), NotificationType.BADGE);
         notificationRepository.save(notification);
         //sendRealTimeNotification(notification);
+    }
+
+    @Transactional
+    public void createPokemonRewardNotification(Member grantor, Member receiver, CollectionDraw grant) {
+        String imageUrl = grant.isShiny()
+                ? (grant.getCollectible().getShinyDetailSpriteUrl() != null
+                        ? grant.getCollectible().getShinyDetailSpriteUrl()
+                        : grant.getCollectible().getShinySpriteUrl())
+                : (grant.getCollectible().getDetailSpriteUrl() != null
+                        ? grant.getCollectible().getDetailSpriteUrl()
+                        : grant.getCollectible().getSpriteUrl());
+        notificationRepository.save(new Notification(
+                grantor.getLoginID(),
+                receiver.getLoginID(),
+                grant.getId(),
+                NotificationType.POKEMON_REWARD,
+                grant.getCollectible().getNameKo(),
+                imageUrl,
+                null,
+                1,
+                grant.isShiny(),
+                grant.getGrantReason()));
+    }
+
+    @Transactional
+    public void createBallRewardNotification(Member grantor, Member receiver, BallTransaction grant) {
+        BallType ballType = grant.getBallType();
+        notificationRepository.save(new Notification(
+                grantor.getLoginID(),
+                receiver.getLoginID(),
+                grant.getId(),
+                NotificationType.BALL_REWARD,
+                ballType == BallType.MASTER ? "마스터볼" : "포켓볼",
+                null,
+                ballType.name(),
+                grant.getAmount(),
+                false,
+                grant.getGrantReason()));
     }
 
     @Transactional

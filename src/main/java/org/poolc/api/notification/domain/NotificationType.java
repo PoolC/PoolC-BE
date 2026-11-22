@@ -4,5 +4,7 @@ public enum NotificationType {
     MESSAGE,
     BADGE,
     COMMENT,
-    POST;
+    POST,
+    POKEMON_REWARD,
+    BALL_REWARD;
 }

@@ -29,6 +29,24 @@ public class Notification extends TimestampEntity {
     @Column(name = "notification_type", nullable = false)
     private NotificationType notificationType;
 
+    @Column(name = "reward_name", length = 120)
+    private String rewardName;
+
+    @Column(name = "reward_image_url", length = 1024)
+    private String rewardImageUrl;
+
+    @Column(name = "reward_ball_type", length = 20)
+    private String rewardBallType;
+
+    @Column(name = "reward_amount")
+    private Integer rewardAmount;
+
+    @Column(name = "reward_shiny")
+    private Boolean rewardShiny;
+
+    @Column(name = "reward_reason", length = 500)
+    private String rewardReason;
+
     @Column(name = "read_status", nullable = false, columnDefinition = "boolean default false")
     private Boolean readStatus = false;
 
@@ -46,6 +64,29 @@ public class Notification extends TimestampEntity {
         this.receiverId = receiverId;
         this.causedById = postId;
         this.notificationType = notificationType;
+    }
+
+    public Notification(
+            String senderId,
+            String receiverId,
+            Long grantId,
+            NotificationType notificationType,
+            String rewardName,
+            String rewardImageUrl,
+            String rewardBallType,
+            Integer rewardAmount,
+            Boolean rewardShiny,
+            String rewardReason) {
+        this.senderId = senderId;
+        this.receiverId = receiverId;
+        this.causedById = grantId;
+        this.notificationType = notificationType;
+        this.rewardName = rewardName;
+        this.rewardImageUrl = rewardImageUrl;
+        this.rewardBallType = rewardBallType;
+        this.rewardAmount = rewardAmount;
+        this.rewardShiny = rewardShiny;
+        this.rewardReason = rewardReason;
     }
 
     // 대댓글 알림
